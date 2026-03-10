@@ -1,0 +1,5 @@
+# 카테고리 코드 (RAG/검색용)
+scholarship
+academic
+faq
+calendar

@@ -1,0 +1,26 @@
+# ChromaDB (로컬 벡터 DB)
+data/chroma_db/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+venv/
+.venv/
+env/
+
+# 환경/비밀
+.env
+.env.local
+*.key
+
+# IDE / OS
+.idea/
+.vscode/
+.cursor/
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
