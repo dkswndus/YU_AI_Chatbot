@@ -47,12 +47,17 @@ def ingest(chroma_path=None, reset=True):
     for c in all_chunks:
         ids.append(c["chunk_id"])
         documents.append(c["text"])
-        metadatas.append({
+        md = {
             "doc_id": c["doc_id"],
             "title": c["title"],
             "category": c["category"],
             "section": c.get("section", ""),
-        })
+        }
+        # academic 구조화 필드가 있으면 metadata로도 저장 (검색 결과 출력/필터링용)
+        for k in ("teacher_name", "course_code", "course_name", "day", "time_range", "room"):
+            if k in c and c.get(k):
+                md[k] = c.get(k)
+        metadatas.append(md)
 
     # ChromaDB add는 한 번에 많이 넣어도 됨 (내부에서 배치)
     coll.add(ids=ids, documents=documents, metadatas=metadatas)

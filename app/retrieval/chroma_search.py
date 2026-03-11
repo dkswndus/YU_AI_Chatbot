@@ -15,7 +15,6 @@ def search(query, n_results=5, category=None):
         where=where,
         include=["documents", "metadatas", "distances"],
     )
-    # result: ids, documents, metadatas, distances (2차원 리스트, query 1개라 [0])
     out = []
     if result["ids"] and result["ids"][0]:
         for i, chunk_id in enumerate(result["ids"][0]):
