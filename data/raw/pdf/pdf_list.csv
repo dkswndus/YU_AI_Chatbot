@@ -1,5 +1,2 @@
 id,title,category,source_type,source,updated_at
-academic_001,2025 2학기 종합강의시간표,academic,pdf,raw/pdf/학사_2025_2학기_종합강의시간표.pdf,2025-10-17
-calendar_001,2025 겨울계절학기 개설안내,calendar,pdf,raw/pdf/학사_2025_겨울계절학기_개설안내.pdf,2025-12-01
-academic_002,2026 1학기 종합강의시간표,academic,pdf,raw/pdf/학사_2026_1학기_종합강의시간표.pdf,2026-01-01
-calendar_002,2026 겨울계절학기 개설안내,calendar,pdf,raw/pdf/학사_2026_겨울계절학기_개설안내.pdf,2026-12-01
+academic_001,2026 1학기 종합강의시간표,academic,pdf,raw/pdf/학사_2026_1학기_종합강의시간표.pdf,2026-01-01

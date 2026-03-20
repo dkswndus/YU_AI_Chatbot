@@ -20,7 +20,6 @@ scholarship_003 | 국가장학금 신청안내 | scholarship | url | https://...
 
 ## 카테고리 값
 
-- **scholarship** – 장학
+
 - **academic** – 학사
-- **faq** – FAQ
 - **calendar** – 일정/캘린더
