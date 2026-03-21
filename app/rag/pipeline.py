@@ -1,17 +1,41 @@
 """
 하이브리드 RAG 파이프라인
-0. Query Rewriting (LLM으로 질문 재작성)
-1. Neo4j 키워드 검색 (교수명/과목명)
-2. ChromaDB 벡터 검색 (재작성된 쿼리로)
-3. 컨텍스트 조합 → EXAONE LLM 답변 생성
+0. Query Rewriting      (LLM: 구어체 → 검색 최적화 쿼리)
+1. Intent Classification (LLM: 의도 분류 → 검색 전략 결정)
+2. HyDE                 (LLM: 가상 답변 생성 → 임베딩 검색)
+3. Neo4j / ChromaDB 검색
+4. Re-ranking           (Cross-Encoder: 검색 결과 정밀 재정렬)
+5. EXAONE LLM 답변 생성
 """
 import json
 from pathlib import Path
 from typing import List, Dict
 
 from neo4j import GraphDatabase
+from sentence_transformers import CrossEncoder
 from app.retrieval.chroma_search import search as chroma_search
 from app.llm.ollama_client import chat, is_available
+
+# Cross-Encoder 모델 (한국어 지원 multilingual)
+_cross_encoder = None
+
+def _get_cross_encoder():
+    global _cross_encoder
+    if _cross_encoder is None:
+        _cross_encoder = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+    return _cross_encoder
+
+
+def _rerank(question: str, chroma_results: List[Dict], top_k: int = 5) -> List[Dict]:
+    """Cross-Encoder로 ChromaDB 결과 재정렬"""
+    if not chroma_results:
+        return chroma_results
+    encoder = _get_cross_encoder()
+    docs = [r.get("document", "") for r in chroma_results]
+    pairs = [(question, doc) for doc in docs]
+    scores = encoder.predict(pairs)
+    ranked = sorted(zip(scores, chroma_results), key=lambda x: x[0], reverse=True)
+    return [r for _, r in ranked[:top_k]]
 
 NEO4J_URI  = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
@@ -256,13 +280,16 @@ def answer(question: str, history: List[Dict] = None) -> str:
     if intent in INTENT_NEO4J:
         # 강의/교수/학과 → Neo4j 우선, ChromaDB 보조 (HyDE 불필요)
         neo4j_results  = _neo4j_search(question)
-        chroma_results = chroma_search(rewritten, n_results=3)
+        chroma_results = chroma_search(rewritten, n_results=10)
     else:
         # 학사일정/수강규정/기타 → HyDE로 ChromaDB 검색
         neo4j_results  = [] if intent in INTENT_CHROMA else _neo4j_search(question)
         hyde_doc       = _hyde_query(rewritten)
-        n              = 7 if intent in INTENT_CHROMA else 5
+        n              = 10
         chroma_results = chroma_search(hyde_doc, n_results=n)
+
+    # Re-ranking: Cross-Encoder로 ChromaDB 결과 재정렬 후 상위 5개
+    chroma_results = _rerank(question, chroma_results, top_k=5)
 
     # 3. 컨텍스트 조합
     context_parts = []
