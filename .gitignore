@@ -24,3 +24,5 @@ Thumbs.db
 
 # 로그
 *.log
+_chat_test.txt
+_dbg.txt
