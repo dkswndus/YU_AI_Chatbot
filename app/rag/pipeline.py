@@ -1,48 +1,53 @@
 """
-하이브리드 RAG 파이프라인
-0. Query Rewriting      (LLM: 구어체 → 검색 최적화 쿼리)
-1. Intent Classification (LLM: 의도 분류 → 검색 전략 결정)
-2. HyDE                 (LLM: 가상 답변 생성 → 임베딩 검색)
-3. Neo4j / ChromaDB 검색
-4. Re-ranking           (Cross-Encoder: 검색 결과 정밀 재정렬)
-5. EXAONE LLM 답변 생성
+하이브리드 RAG 파이프라인 (LangGraph)
+
+[그래프 흐름]
+START
+  └→ rewrite (Query Rewriting)
+      └→ classify (Intent Classification)
+          ├─ 강의_시간표 / 교수_정보 / 학과_연락처 → neo4j_search → chroma_search
+          ├─ 학사_일정 / 수강_규정              → hyde        → chroma_search
+          └─ 기타                              → neo4j_search → hyde → chroma_search
+                                                                   ↓
+                                                               rerank → format → answer → END
 """
 import json
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, TypedDict, Annotated
+import operator
 
+from langgraph.graph import StateGraph, END, START
 from neo4j import GraphDatabase
 from sentence_transformers import CrossEncoder
+from langchain_ollama import ChatOllama
+from langchain_core.messages import SystemMessage, HumanMessage
+
 from app.retrieval.chroma_search import search as chroma_search
-from app.llm.ollama_client import chat, is_available
 
-# Cross-Encoder 모델 (한국어 지원 multilingual)
-_cross_encoder = None
-
-def _get_cross_encoder():
-    global _cross_encoder
-    if _cross_encoder is None:
-        _cross_encoder = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
-    return _cross_encoder
+# ChatOllama: LangSmith 트레이싱 지원
+_llm = ChatOllama(model="exaone3.5:7.8b", base_url="http://localhost:11434")
 
 
-def _rerank(question: str, chroma_results: List[Dict], top_k: int = 5) -> List[Dict]:
-    """Cross-Encoder로 ChromaDB 결과 재정렬"""
-    if not chroma_results:
-        return chroma_results
-    encoder = _get_cross_encoder()
-    docs = [r.get("document", "") for r in chroma_results]
-    pairs = [(question, doc) for doc in docs]
-    scores = encoder.predict(pairs)
-    ranked = sorted(zip(scores, chroma_results), key=lambda x: x[0], reverse=True)
-    return [r for _, r in ranked[:top_k]]
+def _chat(system: str, user: str) -> str:
+    """LangChain ChatOllama 호출 (LangSmith 자동 트레이싱)"""
+    response = _llm.invoke([SystemMessage(content=system), HumanMessage(content=user)])
+    return response.content.strip()
 
+# ── 상수 ─────────────────────────────────────────────────────────────
 NEO4J_URI  = "bolt://localhost:7687"
 NEO4J_USER = "neo4j"
 NEO4J_PASS = "yu_chatbot_2026"
 
-CHUNK_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "processed" / "chunks" / "academic" / "academic_001.json"
+CHUNK_FILE = (
+    Path(__file__).resolve().parent.parent.parent
+    / "data" / "processed" / "chunks" / "academic" / "academic_001.json"
+)
 
+INTENT_NEO4J  = {"강의_시간표", "교수_정보", "학과_연락처"}
+INTENT_CHROMA = {"학사_일정", "수강_규정"}
+VALID_INTENTS = INTENT_NEO4J | INTENT_CHROMA | {"기타"}
+
+# ── 프롬프트 ──────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """당신은 용인대학교 학사 안내 챗봇입니다.
 학생들의 질문에 친절하고 정확하게 답변해주세요.
 제공된 정보(컨텍스트)를 기반으로만 답변하고, 모르는 정보는 "확인이 필요합니다"라고 하세요.
@@ -89,19 +94,18 @@ HYDE_PROMPT = """당신은 용인대학교 학사 안내 전문가입니다.
 - 패논패 = P/NP (Pass/None Pass) 성적처리 방식, 수강신청 시 선택 가능
 - 교필 = 교양필수, 전필 = 전공필수, 전선 = 전공선택, 교선 = 교양선택"""
 
-# 키워드 DB (시작 시 1회 로드)
+# ── 싱글톤 ────────────────────────────────────────────────────────────
+_cross_encoder = None
+_neo4j_driver  = None
 _professors: set = set()
-_courses: set = set()
-_neo4j_driver = None
+_courses: set    = set()
 
 
-def _init_keywords():
-    global _professors, _courses
-    if _professors:
-        return
-    data = json.loads(CHUNK_FILE.read_text(encoding="utf-8"))
-    _professors = {r["professor"] for r in data if r.get("professor")}
-    _courses    = {r["course_name"] for r in data if r.get("course_name")}
+def _get_cross_encoder():
+    global _cross_encoder
+    if _cross_encoder is None:
+        _cross_encoder = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+    return _cross_encoder
 
 
 def _get_driver():
@@ -115,71 +119,70 @@ def _get_driver():
     return _neo4j_driver
 
 
-INTENT_NEO4J   = {"강의_시간표", "교수_정보", "학과_연락처"}
-INTENT_HYDE    = {"학사_일정", "수강_규정", "기타"}  # HyDE 적용 대상
-INTENT_CHROMA  = {"학사_일정", "수강_규정"}
-VALID_INTENTS  = INTENT_NEO4J | INTENT_CHROMA | {"기타"}
+def _init_keywords():
+    global _professors, _courses
+    if _professors:
+        return
+    data = json.loads(CHUNK_FILE.read_text(encoding="utf-8"))
+    _professors = {r["professor"] for r in data if r.get("professor")}
+    _courses    = {r["course_name"] for r in data if r.get("course_name")}
 
 
-def _hyde_query(question: str) -> str:
-    """HyDE: 가상 답변을 생성해 ChromaDB 검색 쿼리로 사용"""
+# ── LangGraph State ───────────────────────────────────────────────────
+class RAGState(TypedDict):
+    question:      str
+    history:       List[Dict]
+    rewritten:     str
+    intent:        str
+    hyde_doc:      str
+    neo4j_results: List[Dict]
+    chroma_results: List[Dict]
+    context:       str
+    answer:        str
+
+
+# ── 노드 함수 ─────────────────────────────────────────────────────────
+def rewrite_node(state: RAGState) -> RAGState:
+    """0단계: Query Rewriting"""
+    question = state["question"]
     try:
-        messages = [
-            {"role": "system", "content": HYDE_PROMPT},
-            {"role": "user", "content": question},
-        ]
-        return chat(messages).strip()
-    except Exception:
-        return question
-
-
-def _classify_intent(question: str) -> str:
-    """LLM으로 질문 의도 분류"""
-    try:
-        messages = [
-            {"role": "system", "content": INTENT_PROMPT},
-            {"role": "user", "content": f"학생: {question}"},
-        ]
-        label = chat(messages).strip()
-        # 레이블만 추출 (화살표 있으면 뒤만)
-        if "→" in label:
-            label = label.split("→")[-1].strip()
-        # 공백/특수문자 제거
-        label = label.replace(" ", "_").strip("-").strip()
-        return label if label in VALID_INTENTS else "기타"
-    except Exception:
-        return "기타"
-
-
-def _rewrite_query(question: str) -> str:
-    """LLM으로 질문을 검색 최적화 쿼리로 재작성"""
-    try:
-        messages = [
-            {"role": "system", "content": REWRITE_PROMPT},
-            {"role": "user", "content": f"학생: {question}"},
-        ]
-        rewritten = chat(messages).strip()
-        # 화살표 이후 텍스트만 추출 (예시 형식 그대로 반환하는 경우 방지)
+        rewritten = _chat(REWRITE_PROMPT, f"학생: {question}")
         if "→" in rewritten:
             rewritten = rewritten.split("→")[-1].strip()
-        return rewritten if rewritten else question
+        state["rewritten"] = rewritten if rewritten else question
     except Exception:
-        return question
+        state["rewritten"] = question
+    return state
 
 
-def _neo4j_search(question: str) -> List[Dict]:
-    """교수명/과목명 키워드로 Neo4j 검색"""
+def classify_node(state: RAGState) -> RAGState:
+    """1단계: Intent Classification"""
+    question = state["question"]
+    try:
+        label = _chat(INTENT_PROMPT, f"학생: {question}")
+        if "→" in label:
+            label = label.split("→")[-1].strip()
+        label = label.replace(" ", "_").strip("-").strip()
+        state["intent"] = label if label in VALID_INTENTS else "기타"
+    except Exception:
+        state["intent"] = "기타"
+    return state
+
+
+def neo4j_node(state: RAGState) -> RAGState:
+    """Neo4j 키워드 검색"""
+    question = state["question"]
     _init_keywords()
     driver = _get_driver()
     if not driver:
-        return []
+        state["neo4j_results"] = []
+        return state
 
     found_profs   = [p for p in _professors if p in question]
-    found_courses = [c for c in _courses if c in question]
+    found_courses = [c for c in _courses    if c in question]
     results = []
 
     with driver.session() as session:
-        # 교수 수업 조회
         for name in found_profs:
             rows = session.run("""
                 MATCH (p:Professor {name: $name})-[t:TEACHES]->(c:Course)
@@ -190,7 +193,6 @@ def _neo4j_search(question: str) -> List[Dict]:
             """, name=name).data()
             results.extend(rows)
 
-        # 과목 조회
         for cname in found_courses:
             rows = session.run("""
                 MATCH (p:Professor)-[t:TEACHES]->(c:Course {course_name: $name})
@@ -200,14 +202,6 @@ def _neo4j_search(question: str) -> List[Dict]:
             """, name=cname).data()
             results.extend(rows)
 
-        # 학과 전화번호 조회
-        for name in found_profs:
-            rows = session.run("""
-                MATCH (d:Department) WHERE d.name CONTAINS $keyword
-                RETURN d.name AS dept, d.phone AS phone, d.college AS college
-            """, keyword=name[:2]).data()  # 교수명 앞 2글자로 학과 매칭은 부정확 → 직접 검색
-
-        # 학과명이 질문에 있으면 전화번호 조회
         dept_keywords = ["학과", "학부", "대학"]
         if any(kw in question for kw in dept_keywords):
             rows = session.run("""
@@ -217,10 +211,85 @@ def _neo4j_search(question: str) -> List[Dict]:
             """, words=[w for w in question.split() if len(w) >= 3]).data()
             results.extend(rows)
 
-    return results
+    state["neo4j_results"] = results
+    return state
 
 
-def _format_neo4j_context(results: List[Dict]) -> str:
+def hyde_node(state: RAGState) -> RAGState:
+    """2단계: HyDE - 가상 답변 생성"""
+    try:
+        state["hyde_doc"] = _chat(HYDE_PROMPT, state["rewritten"])
+    except Exception:
+        state["hyde_doc"] = state["rewritten"]
+    return state
+
+
+def chroma_node(state: RAGState) -> RAGState:
+    """ChromaDB 벡터 검색 (HyDE 또는 rewritten 쿼리 사용)"""
+    query = state.get("hyde_doc") or state["rewritten"]
+    state["chroma_results"] = chroma_search(query, n_results=10)
+    return state
+
+
+def rerank_node(state: RAGState) -> RAGState:
+    """3단계: Cross-Encoder Re-ranking"""
+    chroma_results = state["chroma_results"]
+    if not chroma_results:
+        return state
+
+    encoder = _get_cross_encoder()
+    docs    = [r.get("document", "") for r in chroma_results]
+    pairs   = [(state["question"], doc) for doc in docs]
+    scores  = encoder.predict(pairs)
+    ranked  = sorted(zip(scores, chroma_results), key=lambda x: x[0], reverse=True)
+    state["chroma_results"] = [r for _, r in ranked[:5]]
+    return state
+
+
+def format_node(state: RAGState) -> RAGState:
+    """컨텍스트 조합"""
+    neo4j_ctx  = _format_neo4j(state.get("neo4j_results", []))
+    chroma_ctx = _format_chroma(state.get("chroma_results", []))
+    parts = [p for p in [neo4j_ctx, chroma_ctx] if p]
+    state["context"] = "\n\n".join(parts) if parts else "관련 정보를 찾을 수 없습니다."
+    return state
+
+
+def answer_node(state: RAGState) -> RAGState:
+    """최종 답변 생성"""
+    user_content = f"다음 정보를 참고하여 질문에 답변해주세요.\n\n{state['context']}\n\n질문: {state['question']}"
+    msgs = [SystemMessage(content=SYSTEM_PROMPT)]
+    if state.get("history"):
+        for m in state["history"]:
+            if m["role"] == "user":
+                msgs.append(HumanMessage(content=m["content"]))
+            else:
+                from langchain_core.messages import AIMessage
+                msgs.append(AIMessage(content=m["content"]))
+    msgs.append(HumanMessage(content=user_content))
+    state["answer"] = _llm.invoke(msgs).content.strip()
+    return state
+
+
+# ── 조건부 라우팅 ──────────────────────────────────────────────────────
+def route_by_intent(state: RAGState) -> str:
+    intent = state["intent"]
+    if intent in INTENT_NEO4J:
+        return "neo4j"          # Neo4j → ChromaDB
+    elif intent in INTENT_CHROMA:
+        return "hyde"           # HyDE → ChromaDB
+    else:
+        return "neo4j_then_hyde"  # Neo4j + HyDE → ChromaDB
+
+
+def route_after_neo4j(state: RAGState) -> str:
+    if state["intent"] == "기타":
+        return "hyde"
+    return "chroma"
+
+
+# ── 포매터 ────────────────────────────────────────────────────────────
+def _format_neo4j(results: List[Dict]) -> str:
     if not results:
         return ""
     lines = ["[강의/교수 정보]"]
@@ -231,21 +300,22 @@ def _format_neo4j_context(results: List[Dict]) -> str:
             continue
         seen.add(key)
         if "course_name" in r:
-            parts = [f"과목: {r.get('course_name','')}"]
-            if r.get("professor"): parts.append(f"교수: {r['professor']}")
-            if r.get("course_type"): parts.append(f"이수구분: {r['course_type']}")
-            if r.get("credits"): parts.append(f"학점: {r['credits']}")
-            if r.get("day") and r.get("time_range"): parts.append(f"시간: {r['day']}요일 {r['time_range']}")
+            parts = [f"과목: {r.get('course_name', '')}"]
+            if r.get("professor"):    parts.append(f"교수: {r['professor']}")
+            if r.get("course_type"):  parts.append(f"이수구분: {r['course_type']}")
+            if r.get("credits"):      parts.append(f"학점: {r['credits']}")
+            if r.get("day") and r.get("time_range"):
+                parts.append(f"시간: {r['day']}요일 {r['time_range']}")
             if r.get("research_day"): parts.append(f"연구일: {r['research_day']}요일")
-            if r.get("phone"): parts.append(f"전화: {r['phone']}")
-            if r.get("office"): parts.append(f"연구실: {r['office']}")
+            if r.get("phone"):        parts.append(f"전화: {r['phone']}")
+            if r.get("office"):       parts.append(f"연구실: {r['office']}")
             lines.append("- " + ", ".join(parts))
         elif "dept" in r:
-            lines.append(f"- {r.get('college','')} {r['dept']}: {r.get('phone','')}")
+            lines.append(f"- {r.get('college', '')} {r['dept']}: {r.get('phone', '')}")
     return "\n".join(lines)
 
 
-def _format_chroma_context(results: List[Dict]) -> str:
+def _format_chroma(results: List[Dict]) -> str:
     if not results:
         return ""
     lines = ["[관련 학사 정보]"]
@@ -267,52 +337,69 @@ def _format_chroma_context(results: List[Dict]) -> str:
     return "\n".join(lines)
 
 
+# ── 그래프 빌드 ────────────────────────────────────────────────────────
+def _build_graph():
+    g = StateGraph(RAGState)
+
+    # 노드 등록
+    g.add_node("rewrite",  rewrite_node)
+    g.add_node("classify", classify_node)
+    g.add_node("neo4j",    neo4j_node)
+    g.add_node("hyde",     hyde_node)
+    g.add_node("chroma",   chroma_node)
+    g.add_node("rerank",   rerank_node)
+    g.add_node("format",   format_node)
+    g.add_node("answer",   answer_node)
+
+    # 엣지 연결
+    g.add_edge(START, "rewrite")
+    g.add_edge("rewrite", "classify")
+
+    # classify 이후 의도별 분기
+    g.add_conditional_edges(
+        "classify",
+        route_by_intent,
+        {
+            "neo4j":          "neo4j",
+            "hyde":           "hyde",
+            "neo4j_then_hyde": "neo4j",
+        },
+    )
+
+    # neo4j 이후: 기타면 hyde로, 아니면 바로 chroma
+    g.add_conditional_edges(
+        "neo4j",
+        route_after_neo4j,
+        {
+            "hyde":   "hyde",
+            "chroma": "chroma",
+        },
+    )
+
+    g.add_edge("hyde",   "chroma")
+    g.add_edge("chroma", "rerank")
+    g.add_edge("rerank", "format")
+    g.add_edge("format", "answer")
+    g.add_edge("answer", END)
+
+    return g.compile()
+
+
+_graph = _build_graph()
+
+
+# ── 공개 API ──────────────────────────────────────────────────────────
 def answer(question: str, history: List[Dict] = None) -> str:
-    """
-    질문에 대한 답변 생성
-    history: [{'role': 'user'|'assistant', 'content': '...'}]
-    """
-    # 0. Query Rewriting + Intent Classification
-    rewritten = _rewrite_query(question)
-    intent    = _classify_intent(question)
-
-    # 1~2. 의도에 따라 검색 전략 분기
-    if intent in INTENT_NEO4J:
-        # 강의/교수/학과 → Neo4j 우선, ChromaDB 보조 (HyDE 불필요)
-        neo4j_results  = _neo4j_search(question)
-        chroma_results = chroma_search(rewritten, n_results=10)
-    else:
-        # 학사일정/수강규정/기타 → HyDE로 ChromaDB 검색
-        neo4j_results  = [] if intent in INTENT_CHROMA else _neo4j_search(question)
-        hyde_doc       = _hyde_query(rewritten)
-        n              = 10
-        chroma_results = chroma_search(hyde_doc, n_results=n)
-
-    # Re-ranking: Cross-Encoder로 ChromaDB 결과 재정렬 후 상위 5개
-    chroma_results = _rerank(question, chroma_results, top_k=5)
-
-    # 3. 컨텍스트 조합
-    context_parts = []
-    neo4j_ctx = _format_neo4j_context(neo4j_results)
-    chroma_ctx = _format_chroma_context(chroma_results)
-    if neo4j_ctx:
-        context_parts.append(neo4j_ctx)
-    if chroma_ctx:
-        context_parts.append(chroma_ctx)
-
-    context = "\n\n".join(context_parts) if context_parts else "관련 정보를 찾을 수 없습니다."
-
-    # 4. 프롬프트 구성
-    user_content = f"""다음 정보를 참고하여 질문에 답변해주세요.
-
-{context}
-
-질문: {question}"""
-
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    if history:
-        messages.extend(history)
-    messages.append({"role": "user", "content": user_content})
-
-    # 5. LLM 호출
-    return chat(messages)
+    initial_state: RAGState = {
+        "question":      question,
+        "history":       history or [],
+        "rewritten":     "",
+        "intent":        "",
+        "hyde_doc":      "",
+        "neo4j_results": [],
+        "chroma_results": [],
+        "context":       "",
+        "answer":        "",
+    }
+    result = _graph.invoke(initial_state)
+    return result["answer"]
