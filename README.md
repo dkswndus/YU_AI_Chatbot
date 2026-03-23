@@ -101,6 +101,49 @@ python scripts/server/run_server.py
 
 ---
 
+## API 명세
+
+Base URL: `http://localhost:8000`
+
+### GET `/`
+웹 채팅 UI 반환
+
+### GET `/YU_AI_CHATBOT`
+서버 및 Ollama 상태 확인
+
+**Response**
+```json
+{
+  "status": "ok",
+  "ollama": true
+}
+```
+
+### POST `/YU_AI_CHATBOT/chat`
+챗봇 답변 생성
+
+**Request**
+```json
+{
+  "question": "이경재 교수님 수업 언제야?",
+  "history": [
+    { "role": "user", "content": "이전 질문" },
+    { "role": "assistant", "content": "이전 답변" }
+  ]
+}
+```
+
+**Response**
+```json
+{
+  "answer": "이경재 교수님의 수업은 화요일 10:00~12:00 입니다."
+}
+```
+
+> `history`는 선택 사항이며, 최근 대화 맥락을 유지할 때 사용합니다.
+
+---
+
 ## 프로젝트 구조
 
 ```
