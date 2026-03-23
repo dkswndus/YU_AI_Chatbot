@@ -14,6 +14,7 @@ env/
 .env
 .env.local
 *.key
+mcp.json
 
 # IDE / OS
 .idea/
