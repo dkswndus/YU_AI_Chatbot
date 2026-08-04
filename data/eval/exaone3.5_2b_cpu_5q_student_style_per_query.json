@@ -1,0 +1,119 @@
+[
+  {
+    "id": 1,
+    "question": "노인과건강 몇 학점이야?",
+    "normalized": "노인과건강 몇 학점이야?",
+    "intent": "수강_규정",
+    "latency_ms": 56937.14,
+    "llm_calls": 2,
+    "retrieval_used": [
+      "semantic"
+    ],
+    "prof": {
+      "evaluable": false,
+      "hit_1": false,
+      "hit_5": false,
+      "rr": 0.0
+    },
+    "course": {
+      "evaluable": true,
+      "hit_1": true,
+      "hit_5": true,
+      "rr": 1.0
+    }
+  },
+  {
+    "id": 2,
+    "question": "김판기 수업 월요일에도 있음 빨리",
+    "normalized": "김판기 수업 월요일에도 있음 빨리",
+    "intent": "강의_시간표",
+    "latency_ms": 33674.1,
+    "llm_calls": 3,
+    "retrieval_used": [
+      "keyword",
+      "semantic"
+    ],
+    "prof": {
+      "evaluable": true,
+      "hit_1": false,
+      "hit_5": true,
+      "rr": 0.2
+    },
+    "course": {
+      "evaluable": false,
+      "hit_1": false,
+      "hit_5": false,
+      "rr": 0.0
+    }
+  },
+  {
+    "id": 3,
+    "question": "경영학과 과사 031-8020-3469 맞나 맞음?",
+    "normalized": "경영학과 과사 031-8020-3469 맞나 맞음?",
+    "intent": "학과_연락처",
+    "latency_ms": 46415.78,
+    "llm_calls": 2,
+    "retrieval_used": [
+      "keyword"
+    ],
+    "prof": {
+      "evaluable": false,
+      "hit_1": false,
+      "hit_5": false,
+      "rr": 0.0
+    },
+    "course": {
+      "evaluable": false,
+      "hit_1": false,
+      "hit_5": false,
+      "rr": 0.0
+    }
+  },
+  {
+    "id": 4,
+    "question": "노인재활체육MD 하려면 실용중국어회화중급 꼭 들어야 돼?",
+    "normalized": "노인재활체육MD 하려면 실용중국어회화중급 꼭 들어야 돼?",
+    "intent": "수강_규정",
+    "latency_ms": 17368.29,
+    "llm_calls": 2,
+    "retrieval_used": [
+      "semantic"
+    ],
+    "prof": {
+      "evaluable": false,
+      "hit_1": false,
+      "hit_5": false,
+      "rr": 0.0
+    },
+    "course": {
+      "evaluable": false,
+      "hit_1": false,
+      "hit_5": false,
+      "rr": 0.0
+    }
+  },
+  {
+    "id": 5,
+    "question": "그럼 황성호 물리치료학개론 하심?",
+    "normalized": "그럼 황성호 물리치료학개론 하심?",
+    "intent": "강의_시간표",
+    "latency_ms": 83591.55,
+    "llm_calls": 2,
+    "retrieval_used": [
+      "keyword",
+      "graph"
+    ],
+    "prof": {
+      "evaluable": true,
+      "hit_1": false,
+      "hit_5": true,
+      "rr": 0.3333333333333333
+    },
+    "course": {
+      "evaluable": true,
+      "hit_1": true,
+      "hit_5": true,
+      "rr": 1.0
+    }
+  }
+]

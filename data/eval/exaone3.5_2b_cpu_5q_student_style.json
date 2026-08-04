@@ -1,0 +1,47 @@
+{
+  "experiment_id": "exaone3.5_2b_cpu_5q_student_style",
+  "date": "2026-08-05",
+  "config": {
+    "components": [
+      "exaone3.5_2b_cpu_5q"
+    ],
+    "dataset": "student_style",
+    "sample_size": 5,
+    "n_evaluated": 5
+  },
+  "retrieval_quality": {
+    "professor_name": {
+      "evaluable": 2,
+      "hit_at_1_pct": 0.0,
+      "hit_at_5_pct": 100.0,
+      "mrr": 0.2667
+    },
+    "course_name": {
+      "evaluable": 2,
+      "hit_at_1_pct": 100.0,
+      "hit_at_5_pct": 100.0,
+      "mrr": 1.0
+    }
+  },
+  "system_efficiency": {
+    "avg_latency_ms": 47597.37,
+    "p95_latency_ms": 83591.55,
+    "avg_llm_calls": 2.2,
+    "rewrite_call_rate": 20.0,
+    "bm25_usage_rate": 60.0,
+    "graph_usage_rate": 20.0,
+    "semantic_usage_rate": 60.0
+  },
+  "reliability": {
+    "json_success_rate": 100.0,
+    "fallback_rate": 0.0,
+    "pipeline_error_rate": 0.0,
+    "glossary_coverage": 0.0,
+    "retrieval_empty_rate": {
+      "bm25": 0.0,
+      "chroma": 0.0,
+      "neo4j": 20.0
+    }
+  },
+  "duration_sec": 238.0
+}

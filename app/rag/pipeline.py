@@ -1,37 +1,67 @@
-"""
-하이브리드 RAG 파이프라인 (LangGraph)
+"""하이브리드 RAG 파이프라인 (LangGraph)
 
-[그래프 흐름]
+[그래프 흐름 — 선형]
 START
-  └→ rewrite (Query Rewriting)
-      └→ classify (Intent Classification)
-          ├─ 강의_시간표 / 교수_정보 / 학과_연락처 → neo4j_search → chroma_search
-          ├─ 학사_일정 / 수강_규정              → hyde        → chroma_search
-          └─ 기타                              → neo4j_search → hyde → chroma_search
-                                                                   ↓
-                                                               rerank → format → answer → END
+  → normalize        사전 기반 정규화 (LLM X)
+  → analyze          Query Analysis (intent · entities · retrieval_types · needs_rewrite)
+  → rewrite          조건부 Query Rewriting (needs_rewrite=True 일 때만 LLM)
+  → retrieval        Query Analysis 의 retrieval_types 에 따라 검색기 조건부 호출
+                      ├─ keyword  → BM25
+                      ├─ semantic → ChromaDB
+                      └─ graph    → Neo4j
+  → fusion           RRF (Reciprocal Rank Fusion) 로 순위 기반 통합
+  → rerank           Cross-Encoder 로 최종 Top-K 선정
+  → format           Evidence → LLM context 문자열
+  → answer           LLM 최종 답변
+  → END
+
+핵심 설계:
+  · 저비용·확정성 우선 (Dict → Rule → LLM)
+  · 검색기별 결과는 Evidence 공통 스키마로 통일 (app/rag/evidence.py)
+  · classify / HyDE 제거 (Query Analysis 로 대체, LLM 호출 감소)
 """
 import json
+import os
+import time
+from functools import wraps
 from pathlib import Path
-from typing import List, Dict, TypedDict, Annotated
-import operator
+from typing import Dict, List, Optional, TypedDict
+
+# 모델 · 서비스 엔드포인트 (환경변수로 override 가능)
+OLLAMA_MODEL     = os.environ.get("OLLAMA_MODEL",     "exaone3.5:7.8b")
+OLLAMA_BASE_URL  = os.environ.get("OLLAMA_BASE_URL",  "http://localhost:11434")
 
 from langgraph.graph import StateGraph, END, START
-from neo4j import GraphDatabase
-from sentence_transformers import CrossEncoder
-from langchain_ollama import ChatOllama
-from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.retrieval.chroma_search import search as chroma_search
+from app.retrieval.bm25_search  import search as bm25_search
+from app.rag.normalizer         import normalize_with_stats
+from app.rag.query_analyzer     import analyze_with_stats, QueryAnalysis
+from app.rag.evidence           import (
+    Evidence, from_chroma, from_bm25, from_neo4j
+)
+from app.rag.fusion             import rrf_fuse
 
-# ChatOllama: LangSmith 트레이싱 지원
-_llm = ChatOllama(model="exaone3.5:7.8b", base_url="http://localhost:11434")
+_llm = None  # lazy init
+
+
+def _get_llm():
+    """지연 초기화. langchain_ollama 는 실제 호출 시점에만 로드."""
+    global _llm
+    if _llm is None:
+        from langchain_ollama import ChatOllama
+        _llm = ChatOllama(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
+    return _llm
 
 
 def _chat(system: str, user: str) -> str:
-    """LangChain ChatOllama 호출 (LangSmith 자동 트레이싱)"""
-    response = _llm.invoke([SystemMessage(content=system), HumanMessage(content=user)])
+    from langchain_core.messages import SystemMessage, HumanMessage
+    response = _get_llm().invoke([
+        SystemMessage(content=system),
+        HumanMessage(content=user),
+    ])
     return response.content.strip()
+
 
 # ── 상수 ─────────────────────────────────────────────────────────────
 NEO4J_URI  = "bolt://localhost:7687"
@@ -43,9 +73,14 @@ CHUNK_FILE = (
     / "data" / "processed" / "chunks" / "academic" / "academic_001.json"
 )
 
+# 하위 호환: 외부 코드/테스트에서 참조 가능
 INTENT_NEO4J  = {"강의_시간표", "교수_정보", "학과_연락처"}
 INTENT_CHROMA = {"학사_일정", "수강_규정"}
 VALID_INTENTS = INTENT_NEO4J | INTENT_CHROMA | {"기타"}
+
+FUSION_TOP_N   = 15
+RERANK_TOP_K   = 5
+RETRIEVAL_TOPK = 10
 
 # ── 프롬프트 ──────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """당신은 용인대학교 학사 안내 챗봇입니다.
@@ -57,15 +92,15 @@ REWRITE_PROMPT = """학생의 구어체 질문을 학사 정보 검색에 최적
 규칙:
 - 핵심 키워드(과목명, 교수명, 학과명, 시간, 학점 등)를 명확하게 포함
 - 구어체/줄임말/비문을 표준어로 변환
-- 패논패 = P/NP (Pass/None Pass) 성적처리 방식
+- 대명사/생략을 명시화 (예: "그거", "그 교수님")
 - 한 줄로만 출력, 설명 없이 재작성된 쿼리만 출력
 
 예시:
 학생: 확률과통계 시간 언제야 → 확률과통계 강의 요일 및 시간
 학생: 김중헌 교수님 뭐 가르쳐 → 김중헌 교수 담당 강의 목록
-학생: 물치과 전화번호 알아? → 물리치료학과 전화번호
-학생: 패논패 언제까지야 → P/NP(Pass/None Pass) 성적처리 수강신청 기간"""
+학생: 그거 언제까지야 → 문맥에 따라 명시화된 대상의 마감 일정"""
 
+# 하위 호환용 (classify_node 에서 참조)
 INTENT_PROMPT = """학생의 질문 의도를 아래 6가지 중 하나로만 분류하세요.
 반드시 아래 레이블 중 하나만 출력하세요. 설명 없이 레이블만.
 
@@ -75,24 +110,7 @@ INTENT_PROMPT = """학생의 질문 의도를 아래 6가지 중 하나로만 �
 - 학과_연락처  : 학과/학부 전화번호 조회
 - 학사_일정    : 수강신청, 성적열람, 패논패(P/NP) 기간 등
 - 수강_규정    : 재수강, 이수구분, 학점, 졸업요건 등
-- 기타         : 위 분류에 해당 없음
-
-예시:
-학생: 확률과통계 시간 언제야 → 강의_시간표
-학생: 김중헌 연구실 어디야 → 교수_정보
-학생: 물리치료학과 전화번호 → 학과_연락처
-학생: 패논패 언제까지야 → 학사_일정
-학생: 재수강 되냐 → 수강_규정
-학생: 엘리베이터 고장났어 → 기타"""
-
-HYDE_PROMPT = """당신은 용인대학교 학사 안내 전문가입니다.
-아래 학생 질문에 대해 실제 답변처럼 자세하게 가상의 답변을 작성하세요.
-이 답변은 검색에 활용되므로 관련 키워드를 풍부하게 포함해야 합니다.
-3~5문장으로 작성하세요.
-
-참고 용어:
-- 패논패 = P/NP (Pass/None Pass) 성적처리 방식, 수강신청 시 선택 가능
-- 교필 = 교양필수, 전필 = 전공필수, 전선 = 전공선택, 교선 = 교양선택"""
+- 기타         : 위 분류에 해당 없음"""
 
 # ── 싱글톤 ────────────────────────────────────────────────────────────
 _cross_encoder = None
@@ -104,6 +122,7 @@ _courses: set    = set()
 def _get_cross_encoder():
     global _cross_encoder
     if _cross_encoder is None:
+        from sentence_transformers import CrossEncoder
         _cross_encoder = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
     return _cross_encoder
 
@@ -112,6 +131,7 @@ def _get_driver():
     global _neo4j_driver
     if _neo4j_driver is None:
         try:
+            from neo4j import GraphDatabase
             _neo4j_driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
             _neo4j_driver.verify_connectivity()
         except Exception:
@@ -129,81 +149,157 @@ def _init_keywords():
 
 
 # ── LangGraph State ───────────────────────────────────────────────────
-class RAGState(TypedDict):
-    question:      str
-    history:       List[Dict]
-    rewritten:     str
-    intent:        str
-    hyde_doc:      str
-    neo4j_results: List[Dict]
-    chroma_results: List[Dict]
-    context:       str
-    answer:        str
+class RAGState(TypedDict, total=False):
+    question:            str
+    original_question:   str
+    history:             List[Dict]
+    rewritten:           str
+    intent:              str
+    query_analysis:      Dict
+    evidences_by_source: Dict[str, List[Evidence]]  # {bm25, chroma, neo4j}
+    fused_evidences:     List[Evidence]              # RRF 이후
+    top_evidences:       List[Evidence]              # rerank 이후
+    context:             str
+    answer:              str
+    _timings:            Dict[str, float]
+    _metrics:            Dict
 
 
-# ── 노드 함수 ─────────────────────────────────────────────────────────
-def rewrite_node(state: RAGState) -> RAGState:
-    """0단계: Query Rewriting"""
-    question = state["question"]
-    try:
-        rewritten = _chat(REWRITE_PROMPT, f"학생: {question}")
-        if "→" in rewritten:
-            rewritten = rewritten.split("→")[-1].strip()
-        state["rewritten"] = rewritten if rewritten else question
-    except Exception:
-        state["rewritten"] = question
-    return state
+# ── metrics helpers ───────────────────────────────────────────────────
+def _metrics(state: RAGState) -> Dict:
+    m = state.setdefault("_metrics", {})
+    m.setdefault("usage", {
+        "glossary_hits":            0,
+        "glossary_matched_terms":   [],
+        "retrieval_types_selected": [],
+        "retrieval_types_used":     [],
+        "candidates_before_rerank": 0,
+        "top_k_final":              0,
+        "llm_calls":                0,
+        "rewrite_called":           False,
+    })
+    m.setdefault("reliability", {
+        "analyze_used_fallback": False,
+        "analyze_json_success":  False,
+        "retrieval_empty": {"bm25": None, "chroma": None, "neo4j": None},
+        "pipeline_error": None,
+    })
+    return m
 
 
-def classify_node(state: RAGState) -> RAGState:
-    """1단계: Intent Classification"""
-    question = state["question"]
-    try:
-        label = _chat(INTENT_PROMPT, f"학생: {question}")
-        if "→" in label:
-            label = label.split("→")[-1].strip()
-        label = label.replace(" ", "_").strip("-").strip()
-        state["intent"] = label if label in VALID_INTENTS else "기타"
-    except Exception:
-        state["intent"] = "기타"
-    return state
+def _bump_llm_calls(state: RAGState, n: int = 1) -> None:
+    _metrics(state)["usage"]["llm_calls"] += n
 
 
-def neo4j_node(state: RAGState) -> RAGState:
-    """Neo4j 키워드 검색"""
-    question = state["question"]
+# ── 단계별 지연시간 계측 데코레이터 ───────────────────────────────────
+def _timed(name: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(state: RAGState) -> RAGState:
+            t0 = time.perf_counter()
+            result = func(state)
+            elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+            target = result if result is not None else state
+            target.setdefault("_timings", {})[name] = elapsed_ms
+            return result
+        return wrapper
+    return decorator
+
+
+# ── Neo4j 쿼리 헬퍼 (retrieval_node 에서 재사용) ──────────────────────
+#
+# v2 정규화 스키마 기반 (scripts/rag/run_ingest_neo4j.py 참고):
+#   (Professor)-[:TEACHES]->(Course)
+#   (Course)-[:HELD_ON]->(Day)
+#   (Course)-[:HAS_TIME]->(Time)
+#   (Course)-[:LOCATED_IN]->(Room)
+#   (Professor)-[:BELONGS_TO]->(Department)
+#
+# day / time_range 는 Day / Time 노드에서 alias 로 가져와 v1 과 동일한 shape 반환
+# → evidence.from_neo4j() 는 변경 없이 그대로 동작.
+
+import re as _re
+
+_DAY_CHARS      = set("월화수목금")
+_DAY_MULTI_RE   = _re.compile(r"(월|화|수|목|금)요일")
+# 축약 표기 "월수금" 등: 앞뒤가 한글이 아닐 때만 매칭 → "수업", "교수" 오검지 방지
+_DAY_CONCAT_RE  = _re.compile(r"(?<![가-힣])([월화수목금]{2,5})(?=[\s,\.\?!]|$)")
+
+
+def _find_days(question: str) -> List[str]:
+    """질문에서 요일 감지 (단일 문자로 정규화).
+
+    - "화요일" / "월요일에는" → ['화'], ['월']
+    - "월수금 수업" → ['월', '수', '금']
+    - "수업 시간" → [] (수업의 '수'를 잘못 잡지 않음)
+    """
+    found: List[str] = []
+    for m in _DAY_MULTI_RE.finditer(question):
+        d = m.group(1)
+        if d not in found:
+            found.append(d)
+    for m in _DAY_CONCAT_RE.finditer(question):
+        for d in m.group(1):
+            if d in _DAY_CHARS and d not in found:
+                found.append(d)
+    return found
+
+
+def _neo4j_query(question: str) -> List[Dict]:
     _init_keywords()
     driver = _get_driver()
     if not driver:
-        state["neo4j_results"] = []
-        return state
+        return []
 
     found_profs   = [p for p in _professors if p in question]
     found_courses = [c for c in _courses    if c in question]
-    results = []
+    found_days    = _find_days(question)
+    results: List[Dict] = []
 
     with driver.session() as session:
+        # 1) 교수 + 요일 교집합 (다중 홉, GraphRAG 특화 쿼리)
+        for name in found_profs:
+            for day in found_days:
+                rows = session.run("""
+                    MATCH (p:Professor {name: $name})-[:TEACHES]->(c:Course)-[:HELD_ON]->(d:Day {name: $day})
+                    OPTIONAL MATCH (c)-[:HAS_TIME]->(tm:Time)
+                    OPTIONAL MATCH (c)-[:LOCATED_IN]->(r:Room)
+                    RETURN p.name AS professor, c.course_name AS course_name,
+                           c.course_type AS course_type, c.credits AS credits,
+                           d.name AS day, tm.range AS time_range, r.name AS room,
+                           p.research_day AS research_day, p.phone AS phone, p.office AS office
+                """, name=name, day=day).data()
+                results.extend(rows)
+
+        # 2) 교수 (요일 없거나 요일 매칭 실패 대비 fallback)
         for name in found_profs:
             rows = session.run("""
-                MATCH (p:Professor {name: $name})-[t:TEACHES]->(c:Course)
+                MATCH (p:Professor {name: $name})-[:TEACHES]->(c:Course)
+                OPTIONAL MATCH (c)-[:HELD_ON]->(d:Day)
+                OPTIONAL MATCH (c)-[:HAS_TIME]->(tm:Time)
+                OPTIONAL MATCH (c)-[:LOCATED_IN]->(r:Room)
                 RETURN p.name AS professor, c.course_name AS course_name,
                        c.course_type AS course_type, c.credits AS credits,
-                       t.day AS day, t.time_range AS time_range,
+                       d.name AS day, tm.range AS time_range, r.name AS room,
                        p.research_day AS research_day, p.phone AS phone, p.office AS office
             """, name=name).data()
             results.extend(rows)
 
+        # 3) 과목 → 담당 교수 + 시간
         for cname in found_courses:
             rows = session.run("""
-                MATCH (p:Professor)-[t:TEACHES]->(c:Course {course_name: $name})
+                MATCH (p:Professor)-[:TEACHES]->(c:Course {course_name: $name})
+                OPTIONAL MATCH (c)-[:HELD_ON]->(d:Day)
+                OPTIONAL MATCH (c)-[:HAS_TIME]->(tm:Time)
+                OPTIONAL MATCH (c)-[:LOCATED_IN]->(r:Room)
                 RETURN p.name AS professor, c.course_name AS course_name,
                        c.course_type AS course_type, c.credits AS credits,
-                       t.day AS day, t.time_range AS time_range
+                       d.name AS day, tm.range AS time_range, r.name AS room
             """, name=cname).data()
             results.extend(rows)
 
-        dept_keywords = ["학과", "학부", "대학"]
-        if any(kw in question for kw in dept_keywords):
+        # 4) 학과 (기존과 동일)
+        if any(kw in question for kw in ("학과", "학부", "대학")):
             rows = session.run("""
                 MATCH (d:Department)
                 WHERE any(word IN $words WHERE d.name CONTAINS word)
@@ -211,176 +307,235 @@ def neo4j_node(state: RAGState) -> RAGState:
             """, words=[w for w in question.split() if len(w) >= 3]).data()
             results.extend(rows)
 
-    state["neo4j_results"] = results
+    return results
+
+
+# ── 노드 함수 ─────────────────────────────────────────────────────────
+@_timed("normalize")
+def normalize_node(state: RAGState) -> RAGState:
+    """0. 사전 기반 정규화 (LLM 호출 없음)"""
+    original = state["question"]
+    state["original_question"] = original
+    stats = normalize_with_stats(original)
+    state["question"] = stats["normalized"]
+    usage = _metrics(state)["usage"]
+    usage["glossary_hits"]          = stats["hits"]
+    usage["glossary_matched_terms"] = stats["matched_terms"]
     return state
 
 
-def hyde_node(state: RAGState) -> RAGState:
-    """2단계: HyDE - 가상 답변 생성"""
+@_timed("analyze")
+def analyze_node(state: RAGState) -> RAGState:
+    """1. Query Analysis (JSON 강제 + Pydantic 검증 + rule-based fallback)"""
+    _init_keywords()
+    result = analyze_with_stats(
+        question=state["question"],
+        known_professors=_professors,
+        known_courses=_courses,
+    )
+    analysis: QueryAnalysis = result["analysis"]
+    state["query_analysis"] = analysis.model_dump()
+    state["intent"]         = analysis.to_korean_intent()
+
+    m = _metrics(state)
+    m["usage"]["retrieval_types_selected"] = list(analysis.retrieval_types)
+    m["reliability"]["analyze_used_fallback"] = result["used_fallback"]
+    m["reliability"]["analyze_json_success"]  = result["json_parse_success"]
+    if not result["used_fallback"]:
+        _bump_llm_calls(state)
+    return state
+
+
+@_timed("rewrite")
+def rewrite_node(state: RAGState) -> RAGState:
+    """2. 조건부 Rewrite: query_analysis.needs_rewrite=False 이면 스킵."""
+    qa = state.get("query_analysis", {})
+    needs = qa.get("needs_rewrite", True)
+    if not needs:
+        state["rewritten"] = state["question"]
+        return state
+
+    _metrics(state)["usage"]["rewrite_called"] = True
+    question = state["question"]
     try:
-        state["hyde_doc"] = _chat(HYDE_PROMPT, state["rewritten"])
+        rewritten = _chat(REWRITE_PROMPT, f"학생: {question}")
+        if "→" in rewritten:
+            rewritten = rewritten.split("→")[-1].strip()
+        state["rewritten"] = rewritten if rewritten else question
+        _bump_llm_calls(state)
     except Exception:
-        state["hyde_doc"] = state["rewritten"]
+        state["rewritten"] = question
     return state
 
 
-def chroma_node(state: RAGState) -> RAGState:
-    """ChromaDB 벡터 검색 (HyDE 또는 rewritten 쿼리 사용)"""
-    query = state.get("hyde_doc") or state["rewritten"]
-    state["chroma_results"] = chroma_search(query, n_results=10)
+@_timed("retrieval")
+def retrieval_node(state: RAGState) -> RAGState:
+    """3. 조건부 검색. Query Analysis 의 retrieval_types 에 따라 선택적 호출."""
+    qa = state.get("query_analysis", {})
+    types = set(qa.get("retrieval_types", []))
+    # 안전망: 지정 없으면 semantic + keyword (Neo4j 는 명확한 엔티티가 없으면 노이즈)
+    if not types:
+        types = {"semantic", "keyword"}
+
+    query    = state.get("rewritten") or state["question"]
+    question = state["question"]
+    m        = _metrics(state)
+    used: List[str] = []
+    by_source: Dict[str, List[Evidence]] = {}
+
+    if "keyword" in types:
+        results = bm25_search(query, n_results=RETRIEVAL_TOPK)
+        by_source["bm25"] = [from_bm25(r, i + 1) for i, r in enumerate(results)]
+        used.append("keyword")
+        m["reliability"]["retrieval_empty"]["bm25"] = (len(results) == 0)
+
+    if "semantic" in types:
+        results = chroma_search(query, n_results=RETRIEVAL_TOPK)
+        by_source["chroma"] = [from_chroma(r, i + 1) for i, r in enumerate(results)]
+        used.append("semantic")
+        m["reliability"]["retrieval_empty"]["chroma"] = (len(results) == 0)
+
+    if "graph" in types:
+        rows = _neo4j_query(question)
+        by_source["neo4j"] = [from_neo4j(r, i + 1) for i, r in enumerate(rows)]
+        used.append("graph")
+        m["reliability"]["retrieval_empty"]["neo4j"] = (len(rows) == 0)
+
+    state["evidences_by_source"] = by_source
+    m["usage"]["retrieval_types_used"] = used
     return state
 
 
+@_timed("fusion")
+def fusion_node(state: RAGState) -> RAGState:
+    """4. RRF: 순위 기반 통합. 검색기 간 교집합에 agreement bonus 부여."""
+    by_source = state.get("evidences_by_source", {})
+    lists = [lst for lst in by_source.values() if lst]
+    fused = rrf_fuse(lists, top_n=FUSION_TOP_N) if lists else []
+    state["fused_evidences"] = fused
+    _metrics(state)["usage"]["candidates_before_rerank"] = len(fused)
+    return state
+
+
+def _rerank_text(ev: Evidence) -> str:
+    """Cross-Encoder 입력용 텍스트. content 가 비면 metadata 조립."""
+    if ev.content:
+        return ev.content
+    md = ev.metadata
+    parts: List[str] = []
+    for k in ("professor", "course_name", "dept", "title", "section"):
+        v = md.get(k)
+        if v:
+            parts.append(str(v))
+    return " ".join(parts) or "(no content)"
+
+
+@_timed("rerank")
 def rerank_node(state: RAGState) -> RAGState:
-    """3단계: Cross-Encoder Re-ranking"""
-    chroma_results = state["chroma_results"]
-    if not chroma_results:
+    """5. Cross-Encoder Rerank → Top-K 최종 근거."""
+    fused = state.get("fused_evidences", [])
+    usage = _metrics(state)["usage"]
+    if not fused:
+        state["top_evidences"] = []
+        usage["top_k_final"] = 0
         return state
 
     encoder = _get_cross_encoder()
-    docs    = [r.get("document", "") for r in chroma_results]
-    pairs   = [(state["question"], doc) for doc in docs]
+    pairs   = [(state["question"], _rerank_text(ev)) for ev in fused]
     scores  = encoder.predict(pairs)
-    ranked  = sorted(zip(scores, chroma_results), key=lambda x: x[0], reverse=True)
-    state["chroma_results"] = [r for _, r in ranked[:5]]
+    ranked  = sorted(zip(scores, fused), key=lambda x: x[0], reverse=True)
+    top_k: List[Evidence] = []
+    for new_rank, (_, ev) in enumerate(ranked[:RERANK_TOP_K], 1):
+        top_k.append(ev.model_copy(update={"rank": new_rank}))
+    state["top_evidences"] = top_k
+    usage["top_k_final"] = len(top_k)
     return state
 
 
+_SOURCE_TAG = {"graph": "[Graph]", "keyword": "[Keyword]", "semantic": "[Semantic]"}
+
+
+@_timed("format")
 def format_node(state: RAGState) -> RAGState:
-    """컨텍스트 조합"""
-    neo4j_ctx  = _format_neo4j(state.get("neo4j_results", []))
-    chroma_ctx = _format_chroma(state.get("chroma_results", []))
-    parts = [p for p in [neo4j_ctx, chroma_ctx] if p]
-    state["context"] = "\n\n".join(parts) if parts else "관련 정보를 찾을 수 없습니다."
+    """6. Evidence 리스트를 LLM context 문자열로 조립. 인용 마커 포함."""
+    top = state.get("top_evidences", [])
+    if not top:
+        state["context"] = "관련 정보를 찾을 수 없습니다."
+        return state
+
+    lines: List[str] = []
+    for i, ev in enumerate(top, 1):
+        content = ev.content or _rerank_text(ev)
+        tag     = _SOURCE_TAG.get(ev.source_type, "[?]")
+        lines.append(f"[{i}] {tag} ({ev.source}) {content}")
+    state["context"] = "\n".join(lines)
     return state
 
 
+@_timed("answer")
 def answer_node(state: RAGState) -> RAGState:
-    """최종 답변 생성"""
-    user_content = f"다음 정보를 참고하여 질문에 답변해주세요.\n\n{state['context']}\n\n질문: {state['question']}"
+    """7. 최종 답변 생성."""
+    from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+    user_content = (
+        f"다음 정보를 참고하여 질문에 답변해주세요.\n\n"
+        f"{state['context']}\n\n"
+        f"질문: {state['question']}"
+    )
     msgs = [SystemMessage(content=SYSTEM_PROMPT)]
     if state.get("history"):
         for m in state["history"]:
             if m["role"] == "user":
                 msgs.append(HumanMessage(content=m["content"]))
             else:
-                from langchain_core.messages import AIMessage
                 msgs.append(AIMessage(content=m["content"]))
     msgs.append(HumanMessage(content=user_content))
-    state["answer"] = _llm.invoke(msgs).content.strip()
+    state["answer"] = _get_llm().invoke(msgs).content.strip()
+    _bump_llm_calls(state)
     return state
 
 
-# ── 조건부 라우팅 ──────────────────────────────────────────────────────
-def route_by_intent(state: RAGState) -> str:
-    intent = state["intent"]
-    if intent in INTENT_NEO4J:
-        return "neo4j"          # Neo4j → ChromaDB
-    elif intent in INTENT_CHROMA:
-        return "hyde"           # HyDE → ChromaDB
-    else:
-        return "neo4j_then_hyde"  # Neo4j + HyDE → ChromaDB
-
-
-def route_after_neo4j(state: RAGState) -> str:
-    if state["intent"] == "기타":
-        return "hyde"
-    return "chroma"
-
-
-# ── 포매터 ────────────────────────────────────────────────────────────
-def _format_neo4j(results: List[Dict]) -> str:
-    if not results:
-        return ""
-    lines = ["[강의/교수 정보]"]
-    seen = set()
-    for r in results:
-        key = str(r)
-        if key in seen:
-            continue
-        seen.add(key)
-        if "course_name" in r:
-            parts = [f"과목: {r.get('course_name', '')}"]
-            if r.get("professor"):    parts.append(f"교수: {r['professor']}")
-            if r.get("course_type"):  parts.append(f"이수구분: {r['course_type']}")
-            if r.get("credits"):      parts.append(f"학점: {r['credits']}")
-            if r.get("day") and r.get("time_range"):
-                parts.append(f"시간: {r['day']}요일 {r['time_range']}")
-            if r.get("research_day"): parts.append(f"연구일: {r['research_day']}요일")
-            if r.get("phone"):        parts.append(f"전화: {r['phone']}")
-            if r.get("office"):       parts.append(f"연구실: {r['office']}")
-            lines.append("- " + ", ".join(parts))
-        elif "dept" in r:
-            lines.append(f"- {r.get('college', '')} {r['dept']}: {r.get('phone', '')}")
-    return "\n".join(lines)
-
-
-def _format_chroma(results: List[Dict]) -> str:
-    if not results:
-        return ""
-    lines = ["[관련 학사 정보]"]
-    for r in results:
-        m = r["metadata"]
-        t = m.get("type", "")
-        if t == "course":
-            lines.append(f"- {m.get('course_name','')} ({m.get('professor','')}) "
-                         f"{m.get('day','')}요일 {m.get('time_range','')}")
-        elif t == "professor":
-            lines.append(f"- {m.get('name','')} 교수 연구일: {m.get('day','')} "
-                         f"전화: {m.get('phone','')} 연구실: {m.get('room','')}")
-        elif t == "dept_phone":
-            lines.append(f"- {m.get('dept','')} 전화: {m.get('phone','')}")
-        else:
-            doc = r.get("document", "")
-            if doc:
-                lines.append(f"- {doc[:200]}")
-    return "\n".join(lines)
+# ── 하위 호환: 외부/테스트에서 import 가능하도록 유지, 그래프에는 미포함 ──
+@_timed("classify")
+def classify_node(state: RAGState) -> RAGState:
+    """[Deprecated] 하위 호환용. 그래프에는 포함되지 않음. analyze_node 가 intent 를 뽑음."""
+    question = state["question"]
+    try:
+        label = _chat(INTENT_PROMPT, f"학생: {question}")
+        if "→" in label:
+            label = label.split("→")[-1].strip()
+        label = label.replace(" ", "_").strip("-").strip()
+        state["intent"] = label if label in VALID_INTENTS else "기타"
+        _bump_llm_calls(state)
+    except Exception:
+        state["intent"] = "기타"
+    return state
 
 
 # ── 그래프 빌드 ────────────────────────────────────────────────────────
 def _build_graph():
     g = StateGraph(RAGState)
 
-    # 노드 등록
-    g.add_node("rewrite",  rewrite_node)
-    g.add_node("classify", classify_node)
-    g.add_node("neo4j",    neo4j_node)
-    g.add_node("hyde",     hyde_node)
-    g.add_node("chroma",   chroma_node)
-    g.add_node("rerank",   rerank_node)
-    g.add_node("format",   format_node)
-    g.add_node("answer",   answer_node)
+    for name, node in [
+        ("normalize", normalize_node),
+        ("analyze",   analyze_node),
+        ("rewrite",   rewrite_node),
+        ("retrieval", retrieval_node),
+        ("fusion",    fusion_node),
+        ("rerank",    rerank_node),
+        ("format",    format_node),
+        ("answer",    answer_node),
+    ]:
+        g.add_node(name, node)
 
-    # 엣지 연결
-    g.add_edge(START, "rewrite")
-    g.add_edge("rewrite", "classify")
-
-    # classify 이후 의도별 분기
-    g.add_conditional_edges(
-        "classify",
-        route_by_intent,
-        {
-            "neo4j":          "neo4j",
-            "hyde":           "hyde",
-            "neo4j_then_hyde": "neo4j",
-        },
-    )
-
-    # neo4j 이후: 기타면 hyde로, 아니면 바로 chroma
-    g.add_conditional_edges(
-        "neo4j",
-        route_after_neo4j,
-        {
-            "hyde":   "hyde",
-            "chroma": "chroma",
-        },
-    )
-
-    g.add_edge("hyde",   "chroma")
-    g.add_edge("chroma", "rerank")
-    g.add_edge("rerank", "format")
-    g.add_edge("format", "answer")
-    g.add_edge("answer", END)
+    g.add_edge(START,       "normalize")
+    g.add_edge("normalize", "analyze")
+    g.add_edge("analyze",   "rewrite")
+    g.add_edge("rewrite",   "retrieval")
+    g.add_edge("retrieval", "fusion")
+    g.add_edge("fusion",    "rerank")
+    g.add_edge("rerank",    "format")
+    g.add_edge("format",    "answer")
+    g.add_edge("answer",    END)
 
     return g.compile()
 
@@ -389,17 +544,80 @@ _graph = _build_graph()
 
 
 # ── 공개 API ──────────────────────────────────────────────────────────
-def answer(question: str, history: List[Dict] = None) -> str:
+def answer_with_metadata(question: str, history: List[Dict] = None) -> Dict:
+    """답변 + 완전한 계측 데이터 반환.
+
+    반환 구조는 docs/EXPERIMENT.md §8 (실험 로그 스키마)의 per-query 부분과
+    일치하도록 설계됨. 평가 스크립트가 그대로 집계 가능.
+    """
     initial_state: RAGState = {
-        "question":      question,
-        "history":       history or [],
-        "rewritten":     "",
-        "intent":        "",
-        "hyde_doc":      "",
-        "neo4j_results": [],
-        "chroma_results": [],
-        "context":       "",
-        "answer":        "",
+        "question":            question,
+        "original_question":   question,
+        "history":             history or [],
+        "rewritten":           "",
+        "intent":              "",
+        "query_analysis":      {},
+        "evidences_by_source": {},
+        "fused_evidences":     [],
+        "top_evidences":       [],
+        "context":             "",
+        "answer":              "",
+        "_timings":            {},
+        "_metrics":            {},
     }
-    result = _graph.invoke(initial_state)
-    return result["answer"]
+
+    error: Optional[str] = None
+    try:
+        result = _graph.invoke(initial_state)
+    except Exception as e:
+        error = f"{type(e).__name__}: {e}"
+        result = initial_state
+
+    timings     = result.get("_timings", {})
+    metrics     = result.get("_metrics", {})
+    usage       = metrics.get("usage", {})
+    reliability = metrics.get("reliability", {})
+    if error:
+        reliability = {**reliability, "pipeline_error": error}
+
+    top: List[Evidence] = result.get("top_evidences", [])
+    citations = [
+        {
+            "evidence_id": ev.evidence_id,
+            "source_type": ev.source_type,
+            "source":      ev.source,
+            "rank":        ev.rank,
+            "metadata":    ev.metadata,   # 평가용 (recall/MRR heuristic 판정)
+            "content":     ev.content,    # 평가용
+        }
+        for ev in top
+    ]
+
+    return {
+        "answer":            result.get("answer", ""),
+        "original_question": result.get("original_question", question),
+        "normalized_query":  result.get("question", question),
+        "rewritten_query":   result.get("rewritten", ""),
+        "intent":            result.get("intent", ""),
+        "query_analysis":    result.get("query_analysis", {}),
+        "citations":         citations,
+        "system_efficiency": {
+            "total_ms":                 round(sum(timings.values()), 2),
+            "stage_latency_ms":         timings,
+            "llm_calls":                usage.get("llm_calls", 0),
+            "candidates_before_rerank": usage.get("candidates_before_rerank", 0),
+            "top_k_final":              usage.get("top_k_final", 0),
+        },
+        "usage": {
+            "glossary_hits":            usage.get("glossary_hits", 0),
+            "glossary_matched_terms":   usage.get("glossary_matched_terms", []),
+            "retrieval_types_selected": usage.get("retrieval_types_selected", []),
+            "retrieval_types_used":     usage.get("retrieval_types_used", []),
+            "rewrite_called":           usage.get("rewrite_called", False),
+        },
+        "reliability": reliability,
+    }
+
+
+def answer(question: str, history: List[Dict] = None) -> str:
+    return answer_with_metadata(question, history)["answer"]
