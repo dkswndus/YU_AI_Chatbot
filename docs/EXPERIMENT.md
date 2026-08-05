@@ -15,11 +15,11 @@
 
 | 지표 | 정의 | 측정 방법 | 목표 |
 |---|---|---|---|
-| Recall@5 | 정답 chunk가 상위 5개에 포함된 질문 비율 | 평가셋 1,000개 × pipeline 실행 | 측정 예정 |
-| Recall@10 | 정답 chunk가 상위 10개에 포함된 질문 비율 | 동일 | 교수명 **≥ 30%**, 과목명 **≥ 70%** |
-| MRR | 정답 chunk의 역순위 평균 (Mean Reciprocal Rank) | 동일 | 측정 예정 |
-| Hit@1 | 정답이 1위로 나온 비율 | 동일 | 측정 예정 |
-| Relationship Query Accuracy | 관계형 질문(교수-과목-요일)의 정확도 | Neo4j 특화 평가셋 | **≥ 90%** (회귀 방지) |
+| Hit@5 (교수명, heuristic) | 정답 교수명이 상위 5개에 포함된 비율 | 평가셋 1,000개 × pipeline | 목표 ≥ 30% · 실측 **65.3% / 67.9%** ✅ (2배 초과) |
+| Hit@5 (과목명, heuristic) | 정답 과목명이 상위 5개에 포함된 비율 | 동일 | 목표 ≥ 70% · 실측 **54.1% / 44.7%** ⚠️ 미달 |
+| MRR (교수명 / 과목명) | 정답 chunk의 역순위 평균 (Mean Reciprocal Rank) | 동일 | 실측 prof **0.49 / 0.60**, course **0.46 / 0.39** |
+| Hit@1 (교수명 / 과목명) | 정답이 1위로 나온 비율 | 동일 | 실측 prof **40.2% / 55.5%**, course **40.3% / 36.0%** |
+| Relationship Query Accuracy | 관계형 질문(교수-과목-요일)의 정확도 | Neo4j 특화 평가셋 | 목표 ≥ 90% · 측정 예정 (Neo4j 재활성화 후) |
 
 ### 1.2 Generation Quality — 답변 품질
 
@@ -34,24 +34,24 @@
 
 | 지표 | 정의 | 측정 방법 | 목표 |
 |---|---|---|---|
-| Average Latency | 질문당 평균 응답시간 | pipeline `_timings` 집계 | **< 5초** |
-| P95 Latency | 상위 5% 응답시간 (최악 UX) | 동일 | **< 8초** |
+| Average Latency | 질문당 평균 응답시간 | pipeline `_timings` 집계 | 목표 < 5초 · 실측 **3.63s / 3.58s** ✅ (Colab T4 GPU) |
+| P95 Latency | 상위 5% 응답시간 (최악 UX) | 동일 | 목표 < 8초 · 실측 **6.27s / 5.97s** ✅ |
 | Stage Latency Breakdown | 단계별(normalize/analyze/rewrite/retrieval/rerank/answer) 평균 | `_timings` 세부 | 병목 식별용 |
-| LLM Calls per Query | 질문당 평균 LLM 호출 수 | metrics.reliability | **≤ 3회** |
+| LLM Calls per Query | 질문당 평균 LLM 호출 수 | metrics.reliability | 목표 ≤ 3회 · 실측 **2.29 / 2.31** ✅ |
 | Average Tokens per Query | 질문당 평균 프롬프트 토큰 | tokenizer 집계 | 측정 예정 |
-| Rewrite Call Rate | 전체 질문 중 Rewrite가 발동한 비율 | metrics.usage | 조건부 라우팅 도입 후 **< 40%** |
-| BM25 Usage Rate | BM25가 실제 호출된 질문 비율 | metrics.usage | 측정 예정 |
-| Graph Usage Rate | Neo4j가 실제 호출된 질문 비율 | metrics.usage | 측정 예정 |
+| Rewrite Call Rate | 전체 질문 중 Rewrite가 발동한 비율 | metrics.usage | 목표 < 40% · 실측 **29.5% / 32.4%** (student/natural) ✅ |
+| BM25 Usage Rate | BM25가 실제 호출된 질문 비율 | metrics.usage | 실측 **73.8% / 67.8%** |
+| Graph Usage Rate | Neo4j가 실제 호출된 질문 비율 | metrics.usage | 실측 **5.7% / 8.7%** (Neo4j 미실행 상태) |
 
 ### 1.4 Reliability — 안정성
 
 | 지표 | 정의 | 측정 방법 | 목표 |
 |---|---|---|---|
-| Query Analysis JSON Success Rate | LLM이 valid JSON을 뱉은 비율 | try/except 카운터 | **≥ 95%** |
-| Fallback Trigger Rate | rule-based fallback으로 떨어진 비율 | metrics.reliability | **< 5%** |
-| Retrieval Empty Rate | 검색기별 빈 결과 반환 비율 | metrics.reliability | 측정 예정 |
-| Pipeline Error Rate | 파이프라인 예외 발생률 | 로깅 | **< 1%** |
-| Glossary Coverage | 평가셋 질문 중 사전 치환이 발생한 비율 | normalizer 카운터 | 측정 예정 (사전 확장 지표) |
+| Query Analysis JSON Success Rate | LLM이 valid JSON을 뱉은 비율 | try/except 카운터 | 목표 ≥ 95% · 실측 **99.3% / 98.8%** ✅ |
+| Fallback Trigger Rate | rule-based fallback으로 떨어진 비율 | metrics.reliability | 목표 < 5% · 실측 **0.7% / 1.2%** ✅ |
+| Retrieval Empty Rate | 검색기별 빈 결과 반환 비율 | metrics.reliability | 실측 bm25 **0.0/0.6%** · chroma **0.0%** · neo4j **5.7/8.7%** |
+| Pipeline Error Rate | 파이프라인 예외 발생률 | 로깅 | 목표 < 1% · 실측 **0.1% / 0.0%** ✅ |
+| Glossary Coverage | 평가셋 질문 중 사전 치환이 발생한 비율 | normalizer 카운터 | 실측 **0.9% / 4.7%** (사전 확장 필요) |
 
 ---
 
@@ -158,7 +158,46 @@
 | 3 | + Conditional Routing (Query Analysis) | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 라우팅 효율화 |
 | 4 | + Neo4j (Graph) | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 관계 질의 해결 |
 | 5 | + RRF Fusion | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 결과 통합 품질 |
-| 6 | + Cross-Encoder Reranker (Final) | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 측정 예정 | 관련도 재정렬 |
+| 6 | + Cross-Encoder Reranker (Final) | 아래 §4.1 참조 | 아래 참조 | 아래 참조 | 아래 참조 | 아래 참조 | 관련도 재정렬 |
+
+### 4.1 실측 결과 — Full Pipeline (2026-08-05)
+
+Roadmap Step 6까지 완성된 파이프라인을 두 평가셋 전량(N=1,000)에 실행한 결과.
+**Neo4j 미실행 상태 실측** (Graph Usage 5~9%만 반영). 완전한 Graph 기여도는 Neo4j 활성화 후 재측정 필요.
+
+**환경:** Colab T4 GPU · exaone3.5:2.4b · N=1,000 × 2 datasets
+
+| 카테고리 | 지표 | student_style | natural_v2 | 목표 대비 |
+|---|---|:---:|:---:|---|
+| **Retrieval Quality** | 교수명 Hit@1 | 40.17% | 55.47% | — |
+| | 교수명 Hit@5 | **65.27%** | **67.88%** | 🎯 목표 30% **2배 초과** |
+| | 교수명 MRR | 0.4899 | 0.5978 | 준수 |
+| | 과목명 Hit@1 | 40.34% | 36.01% | — |
+| | 과목명 Hit@5 | 54.14% | 44.72% | ⚠️ 목표 70% 미달 |
+| | 과목명 MRR | 0.4586 | 0.3896 | — |
+| | 평가 대상(prof/course) | 239 / 290 | 137 / 436 | — |
+| **System Efficiency** | Avg Latency | 3,627 ms | 3,579 ms | 🎯 목표 <5,000 달성 |
+| | P95 Latency | 6,268 ms | 5,971 ms | 🎯 목표 <8,000 여유 |
+| | Avg LLM Calls | 2.29 | 2.31 | 🎯 목표 ≤3 달성 |
+| | Rewrite Call Rate | 29.5% | 32.4% | 🎯 목표 <40% 달성 (LLM 70% 절감) |
+| | BM25 Usage | 73.8% | 67.8% | — |
+| | Semantic Usage | 49.3% | 62.1% | — |
+| | Graph Usage | 5.7% | 8.7% | ⚠️ Neo4j 미실행 반영 |
+| **Reliability** | JSON Success Rate | **99.3%** | **98.8%** | 🎯 목표 ≥95% 달성 |
+| | Fallback Rate | 0.7% | 1.2% | 🎯 목표 <5% 달성 |
+| | Pipeline Error Rate | 0.1% | 0.0% | 🎯 목표 <1% 달성 |
+| | Glossary Coverage | 0.9% | 4.7% | ⚠️ 사전 확장 필요 |
+
+**해석 및 결정 근거:**
+
+- **교수명 검색 압도적 개선**: Vector 단독 시 Recall@10 4.9% → Hybrid Pipeline Hit@5 65~68% (약 **13배 개선**). BM25의 고유명사 exact match가 예상대로 핵심 기여.
+- **과목명 Hit@5 44~54%**: 목표(70%) 미달. 원인 후보:
+  - `academic_001.json`의 course chunk 는 `text` 필드가 빈 경우 다수 → BM25 문서 길이가 짧아 랭킹 하방 편향
+  - Cross-Encoder 는 자연어에 최적화 → metadata-only chunk 의 relevance 판단 약함
+  - **후속 개선안**: BM25 인덱싱 시 course chunk 는 metadata 를 자연어 문장으로 조립하여 저장 (Evidence.from_neo4j 스타일)
+- **Rewrite Call Rate 29~32%**: 조건부 라우팅으로 **70%의 질문에서 Rewrite LLM 호출 회피** — 설계 의도대로 작동.
+- **Glossary Coverage 0.9~4.7%**: 사전이 너무 작음 → 확장 지표. 평가셋 실패 케이스에서 자주 나오는 구어체를 사전에 추가하여 개선 여지.
+- **Neo4j 부분 활성 (5~9%)**: Colab 에 Neo4j 미배포. 로컬 재적재 후 재측정 시 교수·과목·요일 관계 질의 정확도 상승 기대.
 
 **예상 효과 방향** (검증 전 가설, 실측으로 확인):
 
@@ -373,4 +412,6 @@ python scripts/eval/run_kpi.py --config full --dataset student_style --save-per-
 | 8 | RRF Fusion | ✅ 완료 (파이프라인 통합) |
 | 9 | Reranker (Evidence 포맷 대응) | ✅ 완료 (파이프라인 통합) |
 | 10 | 평가 스크립트 (KPI 자동 집계) | ✅ 완료 — `scripts/eval/run_kpi.py` |
-| 11 | Ablation Study 전량 실행 및 KPI 표 완성 | ⏭️ 사용자 실행 (로컬 환경 필요) |
+| 11 | Full Pipeline 실측 (N=1,000 × 2 datasets, Colab T4 GPU) | ✅ 완료 — §4.1 참조 |
+| 12 | Ablation 각 조합 실측 (Vector Only → +BM25 → …) | ⏳ 향후 (config 토글 로직 추가 필요) |
+| 13 | Neo4j 활성 상태 재측정 (Relationship Query Accuracy 확보) | ⏳ 로컬 Docker 환경 |

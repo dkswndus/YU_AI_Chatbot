@@ -1,0 +1,47 @@
+{
+  "experiment_id": "colab_gpu_full_natural_v2",
+  "date": "2026-08-05",
+  "config": {
+    "components": [
+      "colab_gpu_full"
+    ],
+    "dataset": "natural_v2",
+    "sample_size": 1000,
+    "n_evaluated": 1000
+  },
+  "retrieval_quality": {
+    "professor_name": {
+      "evaluable": 137,
+      "hit_at_1_pct": 55.47,
+      "hit_at_5_pct": 67.88,
+      "mrr": 0.5978
+    },
+    "course_name": {
+      "evaluable": 436,
+      "hit_at_1_pct": 36.01,
+      "hit_at_5_pct": 44.72,
+      "mrr": 0.3896
+    }
+  },
+  "system_efficiency": {
+    "avg_latency_ms": 3579.11,
+    "p95_latency_ms": 5970.98,
+    "avg_llm_calls": 2.31,
+    "rewrite_call_rate": 32.4,
+    "bm25_usage_rate": 67.8,
+    "graph_usage_rate": 8.7,
+    "semantic_usage_rate": 62.1
+  },
+  "reliability": {
+    "json_success_rate": 98.8,
+    "fallback_rate": 1.2,
+    "pipeline_error_rate": 0.0,
+    "glossary_coverage": 4.7,
+    "retrieval_empty_rate": {
+      "bm25": 0.6,
+      "chroma": 0.0,
+      "neo4j": 8.7
+    }
+  },
+  "duration_sec": 3586.0
+}
