@@ -256,6 +256,155 @@ Roadmap Step 6까지 완성된 파이프라인을 두 평가셋 전량(N=1,000)�
 **포트폴리오 서술 (정직한 회고):**
 > "BM25 인덱싱 개선으로 대부분의 관계 질문이 keyword 검색만으로 해결되어, 이 데이터 규모(1,369 chunks)에서는 Neo4j 의 추가 정확도 기여가 미미했다. 다만 파이프라인의 조건부 라우팅으로 Neo4j 부재 시 자동 fallback 되어, 시스템 안정성은 확보됐다. Neo4j 의 진짜 가치는 스키마 확장(선수과목·학년 관계) 후 다중 홉 질문에서 재검증할 계획이다."
 
+### 4.3 확장 Ablation 실험 프로토콜 (2026-08-05 확정)
+
+리뷰 반영 후 확정된 실험 스펙. **실측 시작 전 고정, 본 실험 진행 중 변경 불가.**
+
+#### 4.3.1 평가셋 스펙 (N=200 층화)
+
+| 카테고리 | 수량 | 주 검증 요소 |
+|---|:---:|---|
+| 의미·구어체 질문 | 50 | ChromaDB, Rewrite |
+| 교수명·과목명·과목코드 | 50 | BM25, 엔티티 보존 |
+| 관계형·다중 조건 질문 | 50 | Neo4j, 조건부 라우팅 |
+| — 단일 관계 (교수→과목) | 15 | |
+| — 제약 조건 (교수+요일) | 15 | |
+| — 다중 홉 (교수→과목→시간/강의실) | 15 | |
+| — 존재하지 않는 조합 | 5 | |
+| 단순·명시적 질문 | 30 | 불필요 Rewrite 방지 |
+| 모호·근거 없음·오류 조합 | 20 | 정보 부족 응답, 환각 방지 |
+| **총** | **200** | |
+
+**큐레이션 방식**: 규칙·LLM 기반 자동 층화 → 카테고리별 5개씩 총 25개 사람 표본 검수 → 잘못된 분류·중복·근거 부재 질문 교체 → 평가셋 고정.
+
+#### 4.3.2 Gold Label 스키마
+
+```json
+{
+  "question_id": "Q001",
+  "category": "entity | semantic | relational | simple | ambiguous",
+  "difficulty": "single-hop | constraint | multi-hop | non-existent",
+  "question": "김중헌 교수님 화요일 수업 뭐야?",
+  "gold_answer": "품새 (09:25-11:10, 무-12209)",
+  "gold_doc_ids": ["academic_001"],
+  "gold_chunk_ids": ["academic_001_course_128"],
+  "required_entities": ["김중헌", "화요일", "품새"],
+  "answerable": true,
+  "notes": "단일 관계 · Neo4j 활용 예상"
+}
+```
+
+**라벨링 절차**:
+1. LLM (Ollama `exaone3.5:2.4b`) 이 각 질문에 대해 후보 chunk 3개 + 신뢰도 반환
+2. 카테고리별 층화 표본 **총 30개 사람 검수** (`gold_chunk_ids` 정확 일치 확인)
+3. 정답 근거가 여러 chunk 걸치면 복수 ID 허용, 불완전 chunk 는 교체
+4. 표본 정확도 ≥ 90% → 200개 확장 · 라벨링 완료
+5. < 90% → LLM 프롬프트 수정 후 전체 재라벨링·재검수
+6. LLM 후보 신뢰도 낮거나 후보 간 점수 차 작으면 수동 검수 대상 격리
+
+#### 4.3.3 KPI 정의 확정
+
+| 지표 | 정의 | 대상 |
+|---|---|---|
+| **Hit@5** | Top-5 검색 결과의 `chunk_id` 와 `gold_chunk_ids` 교집합 ≥ 1 이면 1, 아니면 0. 평균 = 정답 chunk 를 Top-5 에 담은 질문 비율 | 전체 |
+| **Evidence Recall@5** | (Top-5 ∩ `gold_chunk_ids`) 개수 / \|`gold_chunk_ids`\| | 관계형·다중 홉 전용 |
+| **정답률** | LLM Judge (Gemma 3 4B) 채점 결과의 평균 | 전체 |
+| **근거 일치율** | LLM Judge (Gemma 3 4B) 근거-답변 대조 결과의 평균 | 전체 |
+| **평균 응답시간** | 파이프라인 total_ms 평균 | 전체 |
+| **P95 응답시간** | 파이프라인 total_ms 상위 5% | 전체 |
+| **LLM 호출 횟수** | 질문당 LLM 호출 수 평균 | 전체 |
+| **의도 보존율** | Rewrite 전후 의도 일치 (LLM Judge) | Rewrite 실행 질문만 |
+| **엔티티 보존율** | 규칙 기반 - 원문 엔티티 중 Rewrite 결과에 남아있는 비율 | Rewrite 실행 질문만 |
+
+**Judge 모델**: Gemma 3 4B (Ollama). exaone 계열 자기편향 회피 목적.
+
+#### 4.3.4 Rewrite 트리거 규칙 (실측 전 고정)
+
+**트리거 조건 (OR 결합) — 하나 이상 충족 시 Rewrite 실행:**
+
+| # | 조건 | 값 |
+|---|---|---|
+| 1 | BM25 Top-1 score | `< 3.0` |
+| 2 | BM25 Top-5 average score | `< 5.0` |
+| 3 | ChromaDB Top-1 cosine distance | `> 0.5` (낮을수록 유사) |
+| 4 | ChromaDB Top-5 average distance | `> 0.6` |
+| 5 | Query Analysis 추출 엔티티가 Top-5 chunk metadata 에 하나도 없음 | (boolean) |
+| 6 | 유효 검색 결과 (score > 0 & content non-empty) | `< 3개` |
+| 7 | Query Analysis `needs_rewrite` | `= True` |
+
+**Chroma 점수 방향 확인**: `app/retrieval/chroma_search.py` 반환값은 `distance` (낮을수록 유사). 위 조건 #3, #4 방향 일치.
+
+**Rewrite 보호 엔티티** (Rewrite 결과에 반드시 유지):
+- Query Analysis 로 추출한 `professor`, `course`, `department`, `course_number`
+- 유지 실패 시 Rewrite 결과 폐기 → 원문 검색 결과만 사용
+
+**재검색 결과 병합**:
+- 원문 검색 Top-5 + Rewrite 검색 Top-5 → RRF (k=60) 로 통합
+- Hit@5 판정은 병합 후 Top-5 기준
+
+#### 4.3.5 Ablation 조건 (7 조건, 동일 N=200)
+
+**단일 검색기 기준선 (2 조건):**
+- Vector Only (ChromaDB 만)
+- BM25 Only
+
+**누적 Ablation (5 조건, "+" 는 앞 조건에 하나 추가):**
+- `BM25 + Vector` (Union, RRF 없음)
+- `+ RRF` (RRF 융합 추가)
+- `+ Reranker` (Cross-Encoder 재정렬 추가)
+- `+ Conditional Rewrite` (§4.3.4 규칙 기반)
+- `+ Conditional Neo4j` (Query Analysis `retrieval_types` 판단)
+
+**Neo4j 순수 기여 별표 실험** (관계형 50개 서브셋, 3 조건):
+- Full pipeline + `Neo4j OFF`
+- Full pipeline + `Neo4j Always ON` (강제 호출)
+- Full pipeline + `Conditional Neo4j` (Query Analysis 판단)
+
+**Rewrite 실험** (동일 N=200, 3 조건):
+- 원문 검색 (Rewrite 없음)
+- 전체 Rewrite (`RAG_FORCE_REWRITE=1`, 200개 모두 강제)
+- 조건부 Rewrite (§4.3.4 규칙)
+
+Rewrite 실험의 의도·엔티티 보존율은 **실제로 Rewrite 가 실행된 질문만 분모**로 사용. 조건부 Rewrite 의 경우 트리거된 질문만 대상.
+
+#### 4.3.6 Smoke Test (본실험 전)
+
+35건 (5 카테고리 × 7 조건 = 35). 목적:
+- 점수 분포 확인 (BM25 · Chroma distance 분포가 초안 임계값과 일치하는가)
+- 오류율 확인 (JSON 파싱 · Neo4j 연결 · Judge 호출 실패)
+- 파이프라인 안정성 확인
+
+**금지**: smoke test 결과 보고 §4.3.4 임계값 재조정 (사후조작 방지).
+**허용**: 분포가 초안과 근본적으로 어긋나 규칙 자체가 무의미한 경우만 수정 → 수정 이유·분포·수정 후 규칙을 본 문서에 기록. **본 실험 시작 이후에는 절대 변경 금지.**
+
+#### 4.3.7 실행 로그 스키마
+
+모든 pipeline 실행마다 저장 (사후 재현성 확보):
+
+```json
+{
+  "question_id": "Q001",
+  "condition": "conditional_neo4j",
+  "seed": 42,
+  "top5_chunk_ids": ["academic_001_course_128", "..."],
+  "top5_scores": {"bm25": [...], "chroma_distance": [...]},
+  "llm_calls_count": 2,
+  "latency_ms": 3520,
+  "judge_result": {
+    "answer_score": 0.85,
+    "grounded_score": 0.90,
+    "reason": "...",
+    "json_valid": true
+  },
+  "rewrite_meta": {
+    "triggered": true,
+    "trigger_conditions_met": [1, 3],
+    "intent_preserved": true,
+    "entity_preservation_ratio": 1.0
+  }
+}
+```
+
 **예상 효과 방향** (검증 전 가설, 실측으로 확인):
 
 | 단계 | Recall | Latency | LLM Calls | Answer Correctness |
