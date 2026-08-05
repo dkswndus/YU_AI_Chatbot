@@ -66,20 +66,91 @@ def _tokenize(text: str) -> List[str]:
     return out
 
 
+def _build_natural_content(record: Dict) -> str:
+    """구조화된 레코드(course/professor/dept)를 자연어 문장으로 조립.
+
+    academic_001.json 의 course chunk 는 text 필드가 비어있고 metadata 로만 구성됨.
+    → BM25 인덱싱 시 매칭 토큰 부족 + Cross-Encoder rerank 시 판단 불가.
+    이 함수가 metadata → 자연어 변환을 담당하여 두 문제를 동시에 해결한다.
+    """
+    t = record.get("type", "")
+
+    if t == "course":
+        parts: List[str] = []
+        if record.get("professor"):
+            parts.append(f"{record['professor']} 교수")
+        if record.get("course_name"):
+            parts.append(record["course_name"])
+        if record.get("course_type"):
+            parts.append(f"({record['course_type']})")
+        if record.get("credits"):
+            parts.append(f"{record['credits']}학점")
+        if record.get("day") and record.get("time_range"):
+            parts.append(f"{record['day']}요일 {record['time_range']}")
+        elif record.get("day"):
+            parts.append(f"{record['day']}요일")
+        if record.get("room"):
+            parts.append(record["room"])
+        if record.get("course_number"):
+            parts.append(f"과목코드 {record['course_number']}")
+        return " ".join(parts)
+
+    if t == "professor":
+        parts = []
+        if record.get("name"):
+            parts.append(f"{record['name']} 교수")
+        if record.get("dept"):
+            parts.append(record["dept"])
+        if record.get("day"):
+            parts.append(f"연구일 {record['day']}요일")
+        if record.get("phone"):
+            parts.append(f"전화 {record['phone']}")
+        if record.get("room"):
+            parts.append(f"연구실 {record['room']}")
+        return " ".join(parts)
+
+    if t == "dept_phone":
+        parts = []
+        if record.get("college"):
+            parts.append(record["college"])
+        if record.get("dept"):
+            parts.append(record["dept"])
+        if record.get("phone"):
+            parts.append(f"전화 {record['phone']}")
+        return " ".join(parts)
+
+    return ""  # info 등: text 필드를 직접 사용
+
+
 def _build_indexable_text(record: Dict) -> str:
-    """레코드에서 검색용 텍스트 조립. 명시 필드는 앞에 붙여 자연 boost."""
+    """BM25 인덱싱용 텍스트. 자연어 조립본 + 원본 text 결합.
+
+    자연어 조립본이 있으면 그것 + text (info chunk 대응).
+    없으면 기존 로직 (title, section 등을 앞에 부착 후 text).
+    """
+    natural = _build_natural_content(record)
+    text = record.get("text", "")
+
+    if natural:
+        # course/professor/dept: 자연어 우선, text 는 대개 비어있음
+        return f"{natural} {text}".strip() if text else natural
+
+    # info 등: title/section 을 앞에 부착
     parts: List[str] = []
-    for key in ("professor", "course_name", "dept", "college", "title", "section"):
+    for key in ("title", "section"):
         v = record.get(key)
         if v:
             parts.append(str(v))
-    text = record.get("text", "")
     if text:
         parts.append(text)
     return " ".join(parts)
 
 
 def _load_documents() -> None:
+    """text 필드에 저장할 내용 결정:
+        - course/professor/dept: 자연어 조립본 (Rerank · LLM 이 소비 가능)
+        - info 등: 원본 text
+    """
     global _documents
     if _documents:
         return
@@ -88,8 +159,10 @@ def _load_documents() -> None:
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
         for rec in data:
+            natural = _build_natural_content(rec)
+            content = natural if natural else rec.get("text", "")
             _documents.append({
-                "text":     rec.get("text", ""),
+                "text":     content,
                 "metadata": {**rec, "source_file": path.name},
             })
 
