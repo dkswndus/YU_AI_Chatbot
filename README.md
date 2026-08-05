@@ -1,45 +1,70 @@
-# YU AI Chatbot
+# YU AI Chatbot — Hybrid GraphRAG for University Q&A
 
-**챗봇 바로가기**: https://chatbot.yongin.ac.kr/
+용인대학교 학사정보 검색을 위한 **KPI-First Hybrid GraphRAG** 챗봇.
+학생 구어체·약어를 정규화한 뒤, 질문 특성에 따라 **BM25 · ChromaDB · Neo4j** 를 조건부 조합하고, RRF Fusion 과 Cross-Encoder Reranking 을 거쳐 **출처 기반 답변**을 제공한다.
 
-용인대학교 학사·장학 안내 챗봇입니다.
-학생들이 자주 묻는 강의 시간표, 교수 정보, 학사 일정, 수강 규정 등을 LLM 기반 RAG 파이프라인으로 빠르게 답변합니다.
-
----
-
-## 주요 기능
-
-- **하이브리드 RAG 파이프라인** (LangGraph 기반)
-  - Query Rewriting: 구어체 질문 → 검색 최적화 쿼리
-  - Intent Classification: 질문 의도에 따라 검색 전략 자동 분기
-  - HyDE: 가상 답변 생성 후 임베딩 검색
-  - Neo4j 그래프 DB: 교수·과목·학과 관계 키워드 검색
-  - ChromaDB 벡터 검색: 학사 문서 의미 기반 검색
-  - Re-ranking: Cross-Encoder로 검색 결과 정밀 재정렬
-- **LLM**: ChatOllama + EXAONE 3.5 7.8B (로컬 실행)
-- **웹 UI**: FastAPI + HTML/CSS/JS 채팅 인터페이스
-- **LangSmith 트레이싱**: 파이프라인 실행 흐름 모니터링
+**Live**: https://chatbot.yongin.ac.kr/
+**상세 실험 · KPI 프레임워크**: [`docs/EXPERIMENT.md`](docs/EXPERIMENT.md)
 
 ---
 
-## 파이프라인 구조
+## 핵심 결과 (실측 N=1,000 × 2 datasets, Colab T4 GPU · 2026-08-05)
+
+| 지표 | Vector Only (Before) | Hybrid Pipeline (After) | 개선 |
+|---|:---:|:---:|:---:|
+| **교수명 검색 정확도** | Recall@10 **4.9%** | Hit@5 **65~68%** | **약 13배** |
+| **JSON Parsing 안정성** | — | **99.3%** | ✅ 목표 95% 초과 |
+| **Pipeline Error Rate** | — | **0.1%** | ✅ 목표 <1% |
+| **평균 응답 시간** | — | **3.6s** | ✅ 목표 <5s |
+| **P95 응답 시간** | — | **6.3s** | ✅ 목표 <8s |
+| **LLM 호출/질문** | — | **2.29** (Rewrite 조건부) | ✅ 목표 ≤3 |
+| **Rewrite 회피율** | — | **70%** | 조건부 라우팅 효과 |
+
+**Relationship Query 특화 (N=10, Neo4j 활성/비활성 비교):** with_neo4j **100%**, no_neo4j **100%** — 파이프라인 견고성 실증 (Neo4j 부재 시 우아한 fallback)
+
+---
+
+## 아키텍처
 
 ```
 사용자 질문
     ↓
-[1] Query Rewriting       구어체 → 검색 최적화 쿼리
+[0] Dictionary Normalization       확통 → 확률과통계 · 패논패 → P/NP (LLM X, 즉시)
     ↓
-[2] Intent Classification 의도 분류 (강의시간표 / 교수정보 / 학과연락처 / 학사일정 / 수강규정 / 기타)
+[1] Query Analysis                 Pydantic + JSON 강제 + rule-based fallback
+                                   → intent · entities · retrieval_types · needs_rewrite
     ↓
-[3] 검색 전략 분기
-    ├─ 강의시간표·교수정보·학과연락처 → Neo4j 검색 + ChromaDB 검색
-    ├─ 학사일정·수강규정             → HyDE + ChromaDB 검색
-    └─ 기타                          → Neo4j + HyDE + ChromaDB 검색
+[2] Conditional Rewrite            needs_rewrite=True 일 때만 LLM 호출 (70% 회피)
     ↓
-[4] Re-ranking            Cross-Encoder로 결과 재정렬 (상위 5개)
+[3] Conditional Retrieval          retrieval_types 에 따라 검색기 선택
+    ├─ keyword  → BM25             고유명사 · 희귀어 exact match
+    ├─ semantic → ChromaDB         의미 유사도 (표현 다양성)
+    └─ graph    → Neo4j            다중 홉 관계 (교수-과목-요일)
     ↓
-[5] 답변 생성             EXAONE 3.5 7.8B
+[4] RRF Fusion                     서로 다른 점수 척도를 순위 기반 통합
+    ↓
+[5] Cross-Encoder Rerank           Top-K 최종 근거
+    ↓
+[6] LLM Answer + Citation          EXAONE 3.5 2.4B · 근거 인용 표시
 ```
+
+**설계 원칙:** 저비용·확정성 우선 (Dict → Rule → LLM), 필요한 검색기만 조건부 호출.
+
+---
+
+## 왜 이 3가지 조합인가
+
+각 검색기는 서로 다른 사각지대를 커버한다.
+
+| 검색기 | 강한 사각지대 | 대표 질문 |
+|---|---|---|
+| **BM25** | 고유명사 · 희귀어 exact match | "김중헌 교수" |
+| **ChromaDB (Vector)** | 표현 다양성 · 의미 유사도 | "학교 쉬려면 어떻게 해?" |
+| **Neo4j (Graph)** | 다중 홉 엔티티 관계 | "김중헌 교수 화요일 수업" |
+
+**핵심:** 항상 3개 다 실행하지 않는다. Query Analysis 가 뽑은 `retrieval_types` 에 따라 조건부로 호출 → **latency · 비용 최적화**.
+
+한 줄 요약: *교수·과목·학기·시간 간 다단계 관계를 문서 유사도가 아닌 명시적 관계 경로로 탐색하기 위해 Neo4j 를 사용했고, 고유명사 exact match 는 BM25 로, 표현 다양성은 Vector 로 분담했다.*
 
 ---
 
@@ -47,57 +72,60 @@
 
 | 영역 | 기술 |
 |---|---|
-| LLM | ChatOllama + EXAONE 3.5 7.8B |
-| 파이프라인 | LangGraph, LangChain |
-| 벡터 DB | ChromaDB |
-| 그래프 DB | Neo4j 5.18 (Docker) |
-| 임베딩 | paraphrase-multilingual-MiniLM-L12-v2 |
-| Re-ranking | cross-encoder/mmarco-mMiniLMv2-L12-H384-v1 |
-| 백엔드 | FastAPI, Uvicorn |
-| 트레이싱 | LangSmith |
+| LLM | ChatOllama + **EXAONE 3.5 2.4B** (Ollama 로컬) |
+| 파이프라인 오케스트레이션 | **LangGraph** (조건부 라우팅) + **LangSmith** 트레이싱 |
+| 스키마 검증 | **Pydantic** (Query Analysis JSON 강제) |
+| 벡터 검색 | **ChromaDB** + `paraphrase-multilingual-MiniLM-L12-v2` |
+| 키워드 검색 | **rank_bm25** (순수 Python + 한국어 조사 정규화) |
+| 관계 검색 | **Neo4j 5.18** (Cypher, v2 정규화 스키마 — Day/Time 노드 분리) |
+| Re-ranking | `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` |
+| 백엔드 | FastAPI + Uvicorn |
 
 ---
 
-## 실행 방법
+## 실행
 
-### 1. 의존성 설치
-
+### 1. 의존성
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 환경 변수 설정
-
-`.env` 파일 생성:
-
-```env
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=lsv2_pt_...
-LANGCHAIN_PROJECT=YU_AI_Chatbot
-OPENBLAS_NUM_THREADS=1
+### 2. Neo4j (Docker)
+```bash
+docker-compose up -d neo4j
+python scripts/rag/run_ingest_neo4j.py --wipe   # v2 스키마 재적재
 ```
 
-### 3. Neo4j 실행
-
+### 3. Ollama + 모델
 ```bash
-docker compose up -d
+ollama pull exaone3.5:2.4b
+ollama serve
 ```
 
-브라우저: `http://localhost:7474` (ID: `neo4j` / PW: `yu_chatbot_2026`)
-
-### 4. Ollama + EXAONE 실행
-
+### 4. ChromaDB 인덱싱
 ```bash
-ollama run exaone3.5:7.8b
+python scripts/rag/run_ingest_chroma.py
 ```
 
 ### 5. 서버 실행
-
 ```bash
-python scripts/server/run_server.py
+python scripts/server/run_server.py   # http://localhost:8000
 ```
 
-웹 UI: `http://localhost:8000`
+### 평가 실행
+```bash
+# 전량 KPI 실측
+python scripts/eval/run_kpi.py --config full --dataset student_style
+
+# Relationship Query 특화 (Neo4j 활성 검증)
+python scripts/eval/eval_relationship.py --config with_neo4j
+```
+
+**환경변수 (선택):**
+```bash
+export OLLAMA_MODEL=exaone3.5:2.4b       # 기본값
+export OLLAMA_BASE_URL=http://localhost:11434
+```
 
 ---
 
@@ -105,27 +133,17 @@ python scripts/server/run_server.py
 
 Base URL: `http://localhost:8000`
 
-### GET `/`
-웹 채팅 UI 반환
-
-### GET `/YU_AI_CHATBOT`
-서버 및 Ollama 상태 확인
-
-**Response**
+### `GET /YU_AI_CHATBOT`
+헬스 체크
 ```json
-{
-  "status": "ok",
-  "ollama": true
-}
+{ "status": "ok", "ollama": true }
 ```
 
-### POST `/YU_AI_CHATBOT/chat`
+### `POST /YU_AI_CHATBOT/chat`
 챗봇 답변 생성
-
-**Request**
 ```json
 {
-  "question": "이경재 교수님 수업 언제야?",
+  "question": "김중헌 교수님 수업 언제야?",
   "history": [
     { "role": "user", "content": "이전 질문" },
     { "role": "assistant", "content": "이전 답변" }
@@ -135,12 +153,10 @@ Base URL: `http://localhost:8000`
 
 **Response**
 ```json
-{
-  "answer": "이경재 교수님의 수업은 화요일 10:00~12:00 입니다."
-}
+{ "answer": "김중헌 교수님의 태권도 수업은 화요일 09:25~11:10 입니다." }
 ```
 
-> `history`는 선택 사항이며, 최근 대화 맥락을 유지할 때 사용합니다.
+`history` 는 선택 사항 (최근 대화 맥락 유지 용).
 
 ---
 
@@ -149,19 +165,63 @@ Base URL: `http://localhost:8000`
 ```
 YU_AI_Chatbot/
 ├── app/
-│   ├── api/               FastAPI 백엔드 + 웹 UI
-│   │   └── static/        index.html, logo.png
-│   ├── llm/               Ollama 클라이언트
-│   ├── rag/               LangGraph 파이프라인
-│   └── retrieval/         ChromaDB 검색
+│   ├── api/main.py              FastAPI 백엔드 + 웹 UI
+│   ├── rag/
+│   │   ├── pipeline.py          LangGraph 파이프라인 (8단계 선형)
+│   │   ├── normalizer.py        사전 정규화
+│   │   ├── query_analyzer.py    Query Analysis (Pydantic + JSON 강제)
+│   │   ├── evidence.py          검색기 결과 통합 스키마
+│   │   └── fusion.py            RRF (Reciprocal Rank Fusion)
+│   ├── retrieval/
+│   │   ├── bm25_search.py       BM25 + 한국어 토크나이저 + 자연어 조립
+│   │   ├── chroma_search.py     ChromaDB 벡터 검색
+│   │   └── chroma_client.py     ChromaDB 클라이언트
+│   └── llm/                     Ollama 클라이언트
 ├── data/
-│   ├── raw/               원본 PDF·문서
-│   └── processed/         청킹된 JSON, 마크다운
+│   ├── glossary.json            사전 정규화 seed
+│   ├── processed/chunks/        인덱스 소스
+│   └── eval/                    KPI 실측 결과 JSON
 ├── scripts/
-│   ├── chat/              터미널 챗봇
-│   ├── pipeline/          문서 처리 스크립트
-│   └── server/            서버 실행 스크립트
-├── docs/                  프로젝트 문서
+│   ├── eval/
+│   │   ├── run_kpi.py           KPI 자동 집계 평가
+│   │   └── eval_relationship.py Relationship Query 특화 평가
+│   ├── rag/
+│   │   ├── run_ingest_chroma.py ChromaDB 인덱싱
+│   │   └── run_ingest_neo4j.py  Neo4j v2 스키마 적재
+│   └── server/run_server.py
+├── docs/
+│   └── EXPERIMENT.md            KPI 프레임워크 · Ablation · 컴포넌트 선택 근거
 ├── docker-compose.yml
 └── requirements.txt
 ```
+
+---
+
+## 실험 · KPI 프레임워크
+
+이 프로젝트는 **KPI-First 원칙**으로 설계됨:
+
+- 각 컴포넌트에 **"왜 넣었는지 + 어떤 지표로 검증할지 + 언제 뺄지"** 사전 정의
+- 4 카테고리 KPI 자동 수집 (Retrieval / Generation / Efficiency / Reliability)
+- 실측 근거 데이터 공개: `data/eval/colab_gpu_full_*.json`
+
+**전체 프레임워크 · Ablation Matrix · 컴포넌트 선택 근거:** [`docs/EXPERIMENT.md`](docs/EXPERIMENT.md)
+
+---
+
+## 정직한 회고
+
+포트폴리오 관점에서 몇 가지 한계를 밝혀둡니다:
+
+- **과목명 Hit@5 44~54%** — 목표 70% 미달. 원인: course chunk 의 metadata 자연어화 (§4.1 후속안)는 반영했으나 재측정 대기 중.
+- **Neo4j 의 정량 기여 미미** — BM25 자연어화가 강력해서 관계 질문도 대부분 keyword 로 해결됨 (§4.2). 다중 홉 시나리오에서 재검증 계획.
+- **Retrieval Recall 지표는 heuristic 라벨링** — 평가셋에 정답 chunk_id 없어 질문 keyword 매칭으로 근사. 절대치보다 조합 간 델타로 해석.
+- **Ablation 개별 조합 (Vector Only / +BM25 / +Fusion / …) 실측 미완** — Full pipeline 실측만 완료. 컴포넌트 disable 플래그 도입 후 후속.
+
+---
+
+## Author
+
+**Ju Yeon (dkswndus)** · [GitHub](https://github.com/dkswndus)
+
+*단순히 RAG 를 연결한 것이 아니라, 질문 특성에 맞는 검색 전략과 실패 대응 구조를 설계한 Retrieval Engineering 프로젝트입니다.*
