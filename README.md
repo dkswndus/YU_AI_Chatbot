@@ -20,7 +20,37 @@
 | **LLM 호출/질문** | — | **2.29** (Rewrite 조건부) | ✅ 목표 ≤3 |
 | **Rewrite 회피율** | — | **70%** | 조건부 라우팅 효과 |
 
-**Relationship Query 특화 (N=10, Neo4j 활성/비활성 비교):** with_neo4j **100%**, no_neo4j **100%** — 파이프라인 견고성 실증 (Neo4j 부재 시 우아한 fallback)
+**Relationship Query 견고성 검증 (N=10 pilot, Neo4j 활성/비활성 비교):** 두 조건 모두 100% 정확도 — 조건부 라우팅이 Neo4j 부재 시 우아한 fallback 동작 실증. (대규모 관계 평가셋 확장은 후속)
+
+---
+
+## 4가지 핵심 설계 역량
+
+기술 스택 나열이 아니라, 이 프로젝트가 실증한 4가지 엔지니어링 판단.
+
+### 1. 문서 구조화 (Document Structuring)
+
+- **문제**: PDF를 그대로 청킹하면 표 · 목록 · 계층 구조가 파괴되어, RAG 품질의 upstream 결정 요인이 무너짐.
+- **역할**: PDF → Markdown 변환으로 계층 유지, section path 를 chunk metadata 로 보존, type 별(course · professor · info · dept_phone) 분리 청킹.
+- **성과**: 1,054 raw chunks + 315 structured chunks 병행 인덱싱. Section path 보존으로 chunk 맥락 손실 최소화.
+
+### 2. 검색기 역할 분리 (Retriever Separation)
+
+- **문제**: 단일 검색기로는 고유명사 · 의미 · 관계라는 서로 다른 사각지대를 커버 불가. 초기 Vector 단독 시 교수명 Recall@10 **4.9%** — 시스템 최대 병목.
+- **역할**: BM25(exact match) · ChromaDB(semantic) · Neo4j(graph) 각각 고유 사각지대만 담당하도록 명확한 경계 설정. 검색기 결과는 Evidence 공통 스키마로 통일.
+- **성과**: 교수명 **Hit@5 65~68%** (약 13배 개선). 검색기별 사용률 실측으로 역할 분리 실증 — BM25 74%, semantic 49%, graph 5.7%.
+
+### 3. 조건부 라우팅 (Conditional Routing)
+
+- **문제**: "다 넣어" 안티패턴 — 모든 검색기 · 모든 LLM 호출을 무조건 수행하면 latency · 비용 · failure surface 증가.
+- **역할**: Query Analysis (Pydantic + JSON 강제)가 `retrieval_types` · `needs_rewrite` 를 판단 → 파이프라인이 조건부 호출. LLM 부담 최소화.
+- **성과**: Rewrite 회피율 **70%**, 질문당 LLM 호출 **2.29회** (목표 3회 이하). 평균 응답 **3.6초** (목표 5초 이하 달성).
+
+### 4. 비교 실험과 검증 (Comparative Validation)
+
+- **문제**: "썼다" 가 아니라 "효과 있었다" 를 증명해야 함. 설계 근거 없이 기술을 나열하면 신뢰도 하락.
+- **역할**: **KPI-First 프레임워크** (4 카테고리 22개 지표) · 각 컴포넌트에 "왜 넣었나 · 검증 KPI · 실패 신호" 사전 정의 · N=1,000 × 2 datasets 실측.
+- **성과**: JSON 성공률 **99.3%**, Pipeline Error Rate **0.1%**, 관계형 견고성 실증 (Neo4j 활성/비활성 100%). 실측 근거 데이터 공개 — `data/eval/*.json`.
 
 ---
 
