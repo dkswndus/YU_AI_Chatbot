@@ -24,7 +24,80 @@
 
 ---
 
-## 아키텍처
+## 시스템 아키텍처
+
+컴포넌트 구성 · 배포 · 통신 프로토콜.
+
+```mermaid
+graph TB
+    subgraph Client["Client"]
+        UI["Web Browser<br/>index.html + Vanilla JS"]
+    end
+
+    subgraph Backend["Backend Server (port 8000)"]
+        API["FastAPI + Uvicorn<br/>POST /chat"]
+        PL["LangGraph Pipeline<br/>app/rag/pipeline.py"]
+        API --> PL
+    end
+
+    subgraph Retrieval["Retrieval Layer (in-process)"]
+        BM["BM25 Index<br/>rank_bm25 (in-memory)"]
+        CHC["ChromaDB Client<br/>chromadb-python"]
+        N4C["Neo4j Driver<br/>neo4j-python bolt://"]
+    end
+
+    subgraph Storage["Persistent Storage"]
+        CDB[("ChromaDB<br/>local file")]
+        NEO[("Neo4j 5.18<br/>Docker container")]
+        JSN["JSON Chunks<br/>academic_001.json<br/>+ glossary.json"]
+    end
+
+    subgraph Models["Model Runtimes"]
+        OLL["Ollama Server<br/>localhost:11434<br/>EXAONE 3.5 2.4B"]
+        EMB["Embedding Model<br/>MiniLM-L12-v2<br/>sentence-transformers"]
+        REN["Reranker<br/>Cross-Encoder<br/>mmarco-mMiniLMv2"]
+    end
+
+    subgraph Observability["Observability (선택)"]
+        LS["LangSmith Cloud<br/>trace collector"]
+    end
+
+    UI -->|"HTTPS/JSON"| API
+    PL -->|"HTTP<br/>LLM invoke"| OLL
+    PL --> BM
+    PL --> CHC
+    PL --> N4C
+    BM -.->|"cold load"| JSN
+    CHC -->|"gRPC"| CDB
+    N4C -->|"Bolt :7687"| NEO
+    CHC -.->|"embedding"| EMB
+    PL -.->|"rerank"| REN
+    PL -.->|"async trace"| LS
+
+    style Client fill:#e3f2fd
+    style Backend fill:#fff3e0
+    style Retrieval fill:#e8f5e9
+    style Storage fill:#efebe9
+    style Models fill:#fce4ec
+    style Observability fill:#f3e5f5
+```
+
+**배포 특성:**
+- **모든 컴포넌트 로컬 실행** — 외부 API 의존성 없음 (LangSmith 트레이싱만 선택적 클라우드)
+- **Neo4j 만 별도 컨테이너** (docker-compose) — 나머지는 Python 프로세스 내부
+- **Ollama · 임베딩 · Reranker 는 별도 프로세스/모델 캐시** — 파이프라인은 HTTP · Python API 로 호출
+- **JSON chunks 는 cold load** (BM25 인덱스는 in-memory, Chroma DB는 pre-indexed local file)
+
+**장애 격리:**
+- Neo4j 부재 시 → `_get_driver()` 자동 감지 후 검색기 없이 우아하게 fallback (§4.2 실증)
+- Ollama 미실행 시 → LLM 노드 예외 catch 후 pipeline_error 로 기록
+- ChromaDB 파손 시 → BM25 만으로도 대부분 질문 응답 가능 (§4.1)
+
+---
+
+## 파이프라인 흐름
+
+질문이 처리되는 알고리즘 단계.
 
 ```mermaid
 flowchart TD
