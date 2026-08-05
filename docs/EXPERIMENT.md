@@ -126,6 +126,42 @@
 **한 줄 요약 (포트폴리오용):**
 > 교수·과목·학기·시간 간 다단계 관계를 문서 유사도가 아닌 명시적 관계 경로로 탐색하기 위해 Neo4j를 사용했고, 고유명사 exact match는 BM25로, 표현 다양성은 Vector로 분담했다.
 
+### 2.5 왜 RRF (Reciprocal Rank Fusion) 인가
+
+**문제:** 세 검색기(BM25 · ChromaDB · Neo4j)의 결과를 하나의 순위로 통합해야 함.
+각 검색기의 원 점수 척도가 완전히 다름:
+
+| 검색기 | 점수 척도 | 예시 값 |
+|---|---|---|
+| BM25 | 절대값, 문서 길이·희귀도 의존 | 14.90, 8.63 |
+| ChromaDB (cosine distance) | 0.0~2.0, 낮을수록 유사 | 0.13, 0.28 |
+| Neo4j | 없음 (관계 매칭 여부만) | — |
+
+**대안 비교:**
+
+| 방식 | 장점 | 단점 | 채택 |
+|---|---|---|---|
+| **원점수 단순 합산** | 구현 초간단 | 척도 다른 값 합산 → 큰 값이 지배 | ❌ |
+| **Min-Max 정규화 후 합산** | 척도 통일 | 정규화 범위가 쿼리마다 달라짐 · Neo4j 점수 없음 | ❌ |
+| **CombSUM · CombMNZ** | 검증된 초기 방법 | 정규화 여전히 필요 | ❌ |
+| **Learning-to-Rank (LambdaMART 등)** | 최고 성능 | 학습 데이터 필요 (평가셋에 정답 라벨 없음) | ❌ 데이터 부족 |
+| **RRF (Reciprocal Rank Fusion)** | 순위만 사용 → **척도 무관** · 비지도 · 검증된 논문 | k 파라미터 튜닝 필요 (표준값 60) | ✅ **채택** |
+
+**공식:**
+```
+RRF_score(d) = Σ 1 / (k + rank_i(d))
+```
+- `rank_i(d)`: 검색기 i에서 문서 d의 순위 (1-indexed)
+- `k = 60`: 표준값 (Cormack et al. 2009). 낮으면 상위 순위 가중치 ↑
+
+**핵심 특성:**
+1. **원점수 무시 · 순위만 사용** → 척도 이질성 문제 원천 차단
+2. **여러 검색기에 동시 등장하는 chunk에 자연스러운 agreement bonus** (점수 합산 효과)
+3. **비지도** — 학습 데이터 불필요
+4. **강건성** — 특정 검색기가 완전히 실패해도(예: Neo4j 미실행) 다른 검색기 순위로 정상 동작 (§4.2 with/without Neo4j 100% 결과가 이를 실증)
+
+**구현:** `app/rag/fusion.py::rrf_fuse()` · 검색기 간 매칭 키는 `evidence_id` prefix 를 제거한 `local_id` 사용 (chroma:X001과 bm25:X001이 같은 chunk로 인식되어 합산)
+
 ---
 
 ## 3. 설계 의도 → KPI 매핑
@@ -254,29 +290,89 @@ Roadmap Step 6까지 완성된 파이프라인을 두 평가셋 전량(N=1,000)�
 
 | 항목 | 값 | 비고 |
 |---|---|---|
-| 모델 | `exaone3.5:7.8b` | Ollama 로컬 |
+| 모델 | `exaone3.5:2.4b` | Ollama 로컬 (환경변수 `OLLAMA_MODEL` 로 override 가능) |
 | 온도 (일반) | ChatOllama 기본값 | 답변 생성 |
 | 온도 (Query Analysis) | `0.0` | 결정성 확보 |
 | Format | `json` (Query Analysis 한정) | JSON 강제 모드 |
 | 대화 이력 | 최근 6턴 | |
 
-### 6.2 임베딩 (실험 대상)
+**선택 근거:**
 
-| 코드명 | 모델 | 차원 |
-|---|---|---|
-| baseline | `paraphrase-multilingual-MiniLM-L12-v2` | 384 |
-| exp-A | `jhgan/ko-sroberta-multitask` | 768 |
-| exp-B | `BAAI/bge-m3` | 1024 |
+<!-- TODO: 아래를 본인 언어로 채우세요.
+
+가이드:
+1. 제약조건 (외부 API 금지 / VRAM / 응답시간 등)
+2. 후보 비교 (GPT-4 · Claude / Llama · Gemma / EXAONE)
+3. EXAONE 시리즈 중 크기 선택 이유 (2.4b vs 7.8b vs 32b)
+4. 트레이드오프 인정 (2.4b의 약점 + 파이프라인으로 어떻게 보완했는지)
+5. 실측 근거 (avg_latency 3.6s, json_success 99.3% 등)
+
+예시 초안:
+"프로젝트 제약: 외부 API 금지 · VRAM 8GB · 응답 <5초.
+GPT/Claude는 API 제약으로 탈락, Llama·Gemma는 한국어 성능 열세 확인.
+EXAONE 시리즈에서 32B(VRAM 초과)·7.8B(질문당 2~3회 호출 시 지연 부담) 제외,
+**2.4B 채택** — 파이프라인의 조건부 라우팅과 자연어 컨텍스트 정제로 모델 부담 최소화.
+실측 (§4.1): avg_latency 3.6s, JSON 성공률 99.3%로 목표 달성."
+-->
+
+### 6.2 임베딩
+
+| 코드명 | 모델 | 차원 | 상태 |
+|---|---|---|---|
+| **baseline (채택)** | `paraphrase-multilingual-MiniLM-L12-v2` | 384 | ✅ 현재 사용 |
+| exp-A (후속) | `jhgan/ko-sroberta-multitask` | 768 | ⏳ 실험 대상 |
+| exp-B (후속) | `BAAI/bge-m3` | 1024 | ⏳ 실험 대상 |
+
+**선택 근거:**
+
+<!-- TODO: 본인 언어로 채우세요.
+
+가이드:
+1. 제약조건 (한국어 · 로컬 · 인덱스 크기 · CPU 추론)
+2. 후보 비교 (OpenAI ada / ko-sroberta / bge-m3 / MiniLM)
+3. MiniLM 채택 이유 (다국어 · 소형 · 검증된 안정성)
+4. **핵심 논리**: 임베딩 성능 하나에 의존하지 않도록 하이브리드 (BM25 + Graph) 로 보완했다는 서사
+5. 후속 실험 계획 (exp-A/B 로 임베딩만 교체하여 순수 델타 측정)
+
+예시 초안:
+"한국어 지원 · 로컬 실행 · 인덱스 소형 요건.
+OpenAI ada는 API 제약, ko-sroberta(768D)·bge-m3(1024D)는 인덱스 크기·CPU 추론 부담.
+**MiniLM-L12-v2 (384D) 채택** — 다국어 지원 + 소형 인덱스 + 검증된 안정성으로 초기 베이스라인 적합.
+핵심 논리: 임베딩 성능은 유일한 정확도 원천이 아님.
+BM25 (고유명사) + Neo4j (관계) 하이브리드로 임베딩 약점을 상쇄.
+후속 실험으로 ko-sroberta · bge-m3 교체 시 순수 임베딩 델타를 측정할 계획."
+-->
 
 ### 6.3 Retriever
 
 | 검색기 | 구현 | 후보 수 (top-K) |
 |---|---|---|
-| BM25 | `rank_bm25` + Okt 형태소 (or whitespace) | 10 |
+| BM25 | `rank_bm25` + 한국어 조사 정규화 (whitespace + safe suffix strip) | 10 |
 | ChromaDB | HNSW, cosine | 10 |
-| Neo4j | Cypher 관계 매칭 | 그래프 반환 |
-| RRF | k=60 (표준) | 통합 후 15 |
+| Neo4j | Cypher 관계 매칭 (v2 정규화 스키마) | 그래프 반환 |
+| RRF | k=60 (표준값) | 통합 후 15 |
 | Reranker | `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` | 최종 5 |
+
+**Reranker 선택 근거:**
+
+<!-- TODO: 본인 언어로 채우세요.
+
+가이드:
+1. 왜 Reranker가 필요한가 (검색은 recall 위주, rerank는 precision)
+2. 후보 비교 (MonoT5 · bge-reranker · cross-encoder MS MARCO)
+3. `cross-encoder/mmarco-mMiniLMv2-L12-H384-v1` 채택 이유:
+   - 다국어 (Korean 지원)
+   - 384D 소형 → 실시간 재정렬 가능
+   - MS MARCO 학습 → 검색 결과 재정렬 태스크 특화
+4. 트레이드오프 (한국어 특화 rerank 모델 미채택 이유)
+
+예시 초안:
+"BM25/Vector는 recall 지향이라 top-K에 노이즈가 섞임. Cross-Encoder로 precision 확보.
+MonoT5 · bge-reranker는 크기 부담(latency 예산 초과).
+MS MARCO 학습된 다국어 소형 모델 `mmarco-mMiniLMv2-L12-H384-v1` 채택.
+후속: 한국어 특화 rerank 모델 등장 시 교체 검토."
+-->
+
 
 ### 6.4 Neo4j 스키마 (정규화 목표)
 
