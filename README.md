@@ -3,24 +3,29 @@
 용인대학교 학사정보 검색을 위한 **KPI-First Hybrid GraphRAG** 챗봇.
 학생 구어체·약어를 정규화한 뒤, 질문 특성에 따라 **BM25 · ChromaDB · Neo4j** 를 조건부 조합하고, RRF Fusion 과 Cross-Encoder Reranking 을 거쳐 **출처 기반 답변**을 제공한다.
 
-**Live**: https://chatbot.yongin.ac.kr/
+> **본 레포 = 개인 고도화 버전.** 기존 팀 프로젝트 서비스([chatbot.yongin.ac.kr](https://chatbot.yongin.ac.kr/))의 파이프라인을 Hybrid GraphRAG로 재설계하고, KPI-First 실측 프레임워크를 신설했습니다. 본 레포의 파이프라인은 별도 배포되지 않음.
+
 **상세 실험 · KPI 프레임워크**: [`docs/EXPERIMENT.md`](docs/EXPERIMENT.md)
 
 ---
 
-## 핵심 결과 (실측 N=1,000 × 2 datasets, Colab T4 GPU · 2026-08-05)
+## 핵심 결과 (실측 N=1,000 × 2 datasets · Colab T4 GPU · 2026-08-05)
 
-| 지표 | Vector Only (Before) | Hybrid Pipeline (After) | 개선 |
-|---|:---:|:---:|:---:|
-| **교수명 검색 정확도** | Recall@10 **4.9%** | Hit@5 **65~68%** | **약 13배** |
-| **JSON Parsing 안정성** | — | **99.3%** | ✅ 목표 95% 초과 |
-| **Pipeline Error Rate** | — | **0.1%** | ✅ 목표 <1% |
-| **평균 응답 시간** | — | **3.6s** | ✅ 목표 <5s |
-| **P95 응답 시간** | — | **6.3s** | ✅ 목표 <8s |
-| **LLM 호출/질문** | — | **2.29** (Rewrite 조건부) | ✅ 목표 ≤3 |
-| **Rewrite 회피율** | — | **70%** | 조건부 라우팅 효과 |
+**Hybrid Pipeline 실측:**
 
-**Relationship Query 견고성 검증 (N=10 pilot, Neo4j 활성/비활성 비교):** 두 조건 모두 100% 정확도 — 조건부 라우팅이 Neo4j 부재 시 우아한 fallback 동작 실증. (대규모 관계 평가셋 확장은 후속)
+| 지표 | 값 | 목표 대비 |
+|---|:---:|---|
+| 교수명 검색 (Hit@5) | **65~68%** | 목표 30% 초과 달성 ✅ |
+| JSON Parsing 안정성 | **99.3%** | 목표 95% 초과 ✅ |
+| Pipeline Error Rate | **0.1%** | 목표 <1% ✅ |
+| 평균 응답 시간 (T4 GPU) | **3.6s** | 목표 <5s ✅ |
+| P95 응답 시간 (T4 GPU) | **6.3s** | 목표 <8s ✅ |
+| LLM 호출/질문 | **2.29** | 목표 ≤3 ✅ |
+| Rewrite 회피율 | **70%** | 조건부 라우팅 효과 |
+
+**참고 · Vector Only 베이스라인**: 교수명 Recall@10 **4.9%** — 시스템 최대 병목으로 확인. Hybrid 이후 지표(Hit@5)와 **직접 비교 불가** (지표 정의 다름). 동일 조건 Ablation 은 후속.
+
+> **응답 시간 주의**: 3.6s 는 Colab T4 GPU · warm state 실측. 로컬 CPU 환경에서는 cold start 포함 15~80초까지 관측됨 (아래 [실제 대화 예시](#실제-대화-예시) 참조). 서비스 배포 시 GPU 환경 필요.
 
 ---
 
@@ -30,27 +35,39 @@
 
 ### 1. 문서 구조화 (Document Structuring)
 
-- **문제**: PDF를 그대로 청킹하면 표 · 목록 · 계층 구조가 파괴되어, RAG 품질의 upstream 결정 요인이 무너짐.
+- **문제**: 초기 PDF 청킹 과정에서 제목 · 표 · 목록의 계층 정보가 chunk 에 충분히 반영되지 않아, 관련 문서를 찾더라도 상위 맥락(어느 절 · 어느 표) 유지가 불안정.
 - **역할**: PDF → Markdown 변환으로 계층 유지, section path 를 chunk metadata 로 보존, type 별(course · professor · info · dept_phone) 분리 청킹.
-- **성과**: 1,054 raw chunks + 315 structured chunks 병행 인덱싱. Section path 보존으로 chunk 맥락 손실 최소화.
+- **성과**: 1,054 raw chunks + 315 structured chunks 병행 인덱싱. 각 chunk 가 원문 내 위치와 상위 항목(section path) 을 유지하도록 구성.
 
 ### 2. 검색기 역할 분리 (Retriever Separation)
 
-- **문제**: 단일 검색기로는 고유명사 · 의미 · 관계라는 서로 다른 사각지대를 커버 불가. 초기 Vector 단독 시 교수명 Recall@10 **4.9%** — 시스템 최대 병목.
+- **문제**: 단일 검색기로는 고유명사 · 의미 · 관계라는 서로 다른 사각지대를 커버 불가. Vector Only 베이스라인에서 교수명 Recall@10 **4.9%** — 시스템 최대 병목으로 확인.
 - **역할**: BM25(exact match) · ChromaDB(semantic) · Neo4j(graph) 각각 고유 사각지대만 담당하도록 명확한 경계 설정. 검색기 결과는 Evidence 공통 스키마로 통일.
-- **성과**: 교수명 **Hit@5 65~68%** (약 13배 개선). 검색기별 사용률 실측으로 역할 분리 실증 — BM25 74%, semantic 49%, graph 5.7%.
+- **성과**: Hybrid 파이프라인 실측 교수명 **Hit@5 65~68%** (N=1,000). Query Analysis 의 조건부 선택 비율: BM25 **74%**, Vector **49%**, Graph **5.7%** (질문별 복수 검색기 선택 포함).
 
 ### 3. 조건부 라우팅 (Conditional Routing)
 
 - **문제**: "다 넣어" 안티패턴 — 모든 검색기 · 모든 LLM 호출을 무조건 수행하면 latency · 비용 · failure surface 증가.
 - **역할**: Query Analysis (Pydantic + JSON 강제)가 `retrieval_types` · `needs_rewrite` 를 판단 → 파이프라인이 조건부 호출. LLM 부담 최소화.
-- **성과**: Rewrite 회피율 **70%**, 질문당 LLM 호출 **2.29회** (목표 3회 이하). 평균 응답 **3.6초** (목표 5초 이하 달성).
+- **성과**: Rewrite 조건부 호출률 **30%** (70% 스킵), 질문당 LLM 호출 **2.29회** (목표 3회 이하). 평균 응답 **3.6초** (T4 GPU 기준).
+- **한계 · 향후 개선**: 현재는 검색 전 pre-search 판단 방식. 검색 결과 신뢰도 기반 post-search 판단으로 리팩터 시 정확도 개선 여지 있음.
 
 ### 4. 비교 실험과 검증 (Comparative Validation)
 
 - **문제**: "썼다" 가 아니라 "효과 있었다" 를 증명해야 함. 설계 근거 없이 기술을 나열하면 신뢰도 하락.
 - **역할**: **KPI-First 프레임워크** (4 카테고리 22개 지표) · 각 컴포넌트에 "왜 넣었나 · 검증 KPI · 실패 신호" 사전 정의 · N=1,000 × 2 datasets 실측.
-- **성과**: JSON 성공률 **99.3%**, Pipeline Error Rate **0.1%**, 관계형 견고성 실증 (Neo4j 활성/비활성 100%). 실측 근거 데이터 공개 — `data/eval/*.json`.
+- **성과**: JSON 성공률 **99.3%**, Pipeline Error Rate **0.1%**. 실측 근거 데이터 공개 — `data/eval/*.json`.
+- **한계**: 현재는 Full pipeline 실측 완료 상태. 컴포넌트별 순차 추가 Ablation (Vector Only → +BM25 → +Fusion → +Rerank) 은 후속 계획.
+
+---
+
+## 실험 관찰 (참고)
+
+**관계 질문 pilot 평가 (N=10, 큐레이트)**: Neo4j 활성 · 비활성 모두 100% 정확도. **현재 평가셋에서는 Neo4j 의 추가 기여를 확인하지 못함** — BM25 자연어화 개선으로 대부분의 관계 질문이 keyword 검색만으로 해결됨. 다중 홉 · 제약 조건이 포함된 대규모 평가셋으로 재검증 예정.
+
+**긍정적 해석**: Neo4j 부재 시 조건부 라우팅이 다른 검색기로 우아하게 fallback 되어 시스템 안정성 확보.
+
+**정직한 해석**: Neo4j 의 성능 기여는 아직 실증 못 함. 스키마 확장(선수과목 · 학년 관계) 후 재검증 계획.
 
 ---
 
@@ -273,9 +290,9 @@ export OLLAMA_BASE_URL=http://localhost:11434
 
 **Q4. 존재하지 않는 조합**
 > 질문: "김중헌 확률과통계 언제야?"
-> (실제로는 김중헌 교수는 태권도 담당, 확률과통계는 강맹수 교수)
+> (실제: 김중헌 교수는 태권도 담당, 확률과통계는 강맹수 교수)
 > 답변: "제공된 정보에는 김중헌 교수의 확률과통계 강의에 대한 구체적인 정보가 포함되어 있지 않습니다. 확인이 필요합니다."
-> — Query Analysis가 잘못된 조합을 감지, LLM이 hallucination 대신 refusal 반환
+> — 검색 근거에서 해당 교수·과목 조합을 확인하지 못한 경우, 답변 생성 단계에서 정보 부족 응답 반환 (hallucination 회피)
 
 **상세 실측 결과**: `data/eval/relationship_with_neo4j.json` (10문항 100% 정확)
 

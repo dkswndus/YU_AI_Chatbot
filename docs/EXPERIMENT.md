@@ -226,7 +226,7 @@ Roadmap Step 6까지 완성된 파이프라인을 두 평가셋 전량(N=1,000)�
 
 **해석 및 결정 근거:**
 
-- **교수명 검색 압도적 개선**: Vector 단독 시 Recall@10 4.9% → Hybrid Pipeline Hit@5 65~68% (약 **13배 개선**). BM25의 고유명사 exact match가 예상대로 핵심 기여.
+- **교수명 검색 개선 확인**: Vector Only 베이스라인 시 교수명 Recall@10 **4.9%** (시스템 최대 병목). Hybrid Pipeline 실측 Hit@5 **65~68%** 기록. 두 지표는 정의(Recall@10 vs Hit@5)가 다르므로 직접 배수 비교는 불가 — 동일 지표 기준 순수 델타는 후속 Ablation 에서 확정 예정. BM25의 고유명사 exact match가 예상대로 핵심 기여로 관찰됨.
 - **과목명 Hit@5 44~54%**: 목표(70%) 미달. 원인 후보:
   - `academic_001.json`의 course chunk 는 `text` 필드가 빈 경우 다수 → BM25 문서 길이가 짧아 랭킹 하방 편향
   - Cross-Encoder 는 자연어에 최적화 → metadata-only chunk 의 relevance 판단 약함
