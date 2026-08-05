@@ -374,28 +374,59 @@ MS MARCO 학습된 다국어 소형 모델 `mmarco-mMiniLMv2-L12-H384-v1` 채택
 -->
 
 
-### 6.4 Neo4j 스키마 (정규화 목표)
+### 6.4 Neo4j 스키마 (v2 정규화, ✅ 적용 완료)
 
-**목표 스키마 (Roadmap Step 6에서 리팩터):**
+**노드 · 관계 다이어그램:**
 
+```mermaid
+graph LR
+    P((Professor<br/>name, phone,<br/>office, research_day)) -->|TEACHES| C((Course<br/>course_number,<br/>course_name, credits))
+    C -->|HELD_ON| D((Day<br/>name))
+    C -->|HAS_TIME| T((Time<br/>range))
+    C -->|LOCATED_IN| R((Room<br/>name))
+    P -->|BELONGS_TO| DP((Department<br/>name, phone,<br/>college))
+
+    style P fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#f3e5f5
+    style T fill:#f3e5f5
+    style R fill:#e8f5e9
+    style DP fill:#fce4ec
 ```
-(:Professor {name, phone, office, research_day})
-(:Course {course_name, course_type, credits})
-(:Department {name, phone, college})
-(:Day {name})           ← 정규화 (기존 TEACHES 속성에서 분리)
-(:Time {range})         ← 정규화
-(:Classroom {name})     ← 정규화
 
-관계:
-(Professor)-[:TEACHES]->(Course)
-(Course)-[:HELD_ON]->(Day)
-(Course)-[:HAS_TIME]->(Time)
-(Course)-[:LOCATED_IN]->(Classroom)
-(Professor)-[:BELONGS_TO]->(Department)
+**실측 데이터 규모 (`--wipe` 재적재 후):**
+
+| 노드 | 개수 | | 관계 | 개수 |
+|---|:---:|---|---|:---:|
+| Professor | 316 | | TEACHES | 931 |
+| Course | 933 | | HELD_ON | 886 |
+| Day | 5 | | HAS_TIME | 886 |
+| Time | 33 | | LOCATED_IN | 910 |
+| Room | 146 | | BELONGS_TO | 0 ⚠️ |
+| Department | 40 | | | |
+
+⚠️ `BELONGS_TO` 관계 미생성: Professor 노드의 `dept` 속성값이 Department 노드의 `name`과 정확 일치하지 않음. 데이터 정합 개선 후 재연결 예정.
+
+**구체적 예시 (김중헌 교수의 확률과통계 강의):**
+
+```mermaid
+graph LR
+    P((김중헌<br/>Professor)) -->|TEACHES| C((품새<br/>Course))
+    C -->|HELD_ON| D((화<br/>Day))
+    C -->|HAS_TIME| T((09:25~11:10<br/>Time))
+    C -->|LOCATED_IN| R((무-12209<br/>Room))
 ```
 
-**현재 스키마:** `(Professor)-[:TEACHES {day, time_range}]->(Course)` — day/time이 관계 속성으로 저장.
-**전환 이유:** GraphRAG의 다중 홉 표현력 확보, "월요일에 강의 있는 교수는?" 같은 역방향 질의 지원.
+**Cypher 예시 쿼리 (다중 홉 관계 탐색):**
+```cypher
+// 교수 + 요일 교집합
+MATCH (p:Professor {name: "강맹수"})-[:TEACHES]->(c:Course)-[:HELD_ON]->(d:Day {name: "금"})
+OPTIONAL MATCH (c)-[:HAS_TIME]->(t:Time)
+OPTIONAL MATCH (c)-[:LOCATED_IN]->(r:Room)
+RETURN c.course_name, t.range, r.name
+```
+
+**전환 이유 (v1 → v2):** v1은 `TEACHES {day, time_range}` 로 day/time을 관계 속성으로 저장 → SQL JOIN 스타일 표현, 역방향 질의(예: "월요일에 강의 있는 교수 목록") 곤란. v2는 Day/Time을 독립 노드로 승격하여 GraphRAG의 다중 홉 표현력 확보.
 
 ---
 

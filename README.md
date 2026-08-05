@@ -26,26 +26,38 @@
 
 ## 아키텍처
 
-```
-사용자 질문
-    ↓
-[0] Dictionary Normalization       확통 → 확률과통계 · 패논패 → P/NP (LLM X, 즉시)
-    ↓
-[1] Query Analysis                 Pydantic + JSON 강제 + rule-based fallback
-                                   → intent · entities · retrieval_types · needs_rewrite
-    ↓
-[2] Conditional Rewrite            needs_rewrite=True 일 때만 LLM 호출 (70% 회피)
-    ↓
-[3] Conditional Retrieval          retrieval_types 에 따라 검색기 선택
-    ├─ keyword  → BM25             고유명사 · 희귀어 exact match
-    ├─ semantic → ChromaDB         의미 유사도 (표현 다양성)
-    └─ graph    → Neo4j            다중 홉 관계 (교수-과목-요일)
-    ↓
-[4] RRF Fusion                     서로 다른 점수 척도를 순위 기반 통합
-    ↓
-[5] Cross-Encoder Rerank           Top-K 최종 근거
-    ↓
-[6] LLM Answer + Citation          EXAONE 3.5 2.4B · 근거 인용 표시
+```mermaid
+flowchart TD
+    Q([사용자 질문]) --> N["0. Dictionary Normalization<br/>확통 → 확률과통계, 패논패 → P/NP<br/><i>LLM 미사용, 즉시</i>"]
+    N --> A["1. Query Analysis<br/>Pydantic + JSON 강제 + fallback<br/><i>intent · entities · retrieval_types · needs_rewrite</i>"]
+    A --> R{needs_rewrite?}
+    R -->|Yes 30%| RW["2. LLM Rewrite"]
+    R -->|No 70%| RS["Skip"]
+    RW --> RT["3. Conditional Retrieval<br/><i>retrieval_types 기반 선택</i>"]
+    RS --> RT
+
+    RT -.->|keyword| BM25["BM25<br/>고유명사 · 희귀어"]
+    RT -.->|semantic| CHR["ChromaDB<br/>의미 유사도"]
+    RT -.->|graph| N4J["Neo4j<br/>다중 홉 관계"]
+
+    BM25 --> F["4. RRF Fusion<br/><i>순위 기반 통합, k=60</i>"]
+    CHR --> F
+    N4J --> F
+
+    F --> RR["5. Cross-Encoder Rerank<br/><i>Top-K 최종 근거</i>"]
+    RR --> FT["6. Format<br/><i>Evidence → Context</i>"]
+    FT --> AN["7. LLM Answer + Citation<br/>EXAONE 3.5 2.4B"]
+    AN --> OUT([답변 + 출처])
+
+    style N fill:#e1f5ff
+    style A fill:#e1f5ff
+    style RW fill:#fff4e1
+    style BM25 fill:#e8f5e9
+    style CHR fill:#e8f5e9
+    style N4J fill:#e8f5e9
+    style F fill:#fce4ec
+    style RR fill:#fce4ec
+    style AN fill:#fff4e1
 ```
 
 **설계 원칙:** 저비용·확정성 우선 (Dict → Rule → LLM), 필요한 검색기만 조건부 호출.
