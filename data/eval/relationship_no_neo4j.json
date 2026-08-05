@@ -1,0 +1,201 @@
+{
+  "config": "no_neo4j",
+  "date": "2026-08-05",
+  "n_questions": 10,
+  "accuracy_pct": 100.0,
+  "avg_latency_ms": 44244.04,
+  "by_category": {
+    "prof→courses": {
+      "total": 2,
+      "hit": 2,
+      "acc_pct": 100.0
+    },
+    "course→prof": {
+      "total": 1,
+      "hit": 1,
+      "acc_pct": 100.0
+    },
+    "prof+day": {
+      "total": 2,
+      "hit": 2,
+      "acc_pct": 100.0
+    },
+    "course→time": {
+      "total": 1,
+      "hit": 1,
+      "acc_pct": 100.0
+    },
+    "course→room": {
+      "total": 1,
+      "hit": 1,
+      "acc_pct": 100.0
+    },
+    "dept→phone": {
+      "total": 2,
+      "hit": 2,
+      "acc_pct": 100.0
+    },
+    "prof→credits": {
+      "total": 1,
+      "hit": 1,
+      "acc_pct": 100.0
+    }
+  },
+  "duration_sec": 442.5,
+  "per_query": [
+    {
+      "category": "prof→courses",
+      "question": "김중헌 교수가 담당하는 과목은?",
+      "expected": [
+        "태권도",
+        "품새"
+      ],
+      "answer": "김중헌 교수가 담당하는 과목 중 하나는 **쉽게배우는맛보기태권도 (교선)** 입니다. 이 과목은 **3학점**이며 **과목코드**는 **950031-01** 입니다.",
+      "hit": true,
+      "latency_ms": 81626.8,
+      "retrieval_used": [
+        "keyword"
+      ],
+      "neo4j_empty": null
+    },
+    {
+      "category": "prof→courses",
+      "question": "강맹수 교수 담당 강의 알려줘",
+      "expected": [
+        "확률과통계"
+      ],
+      "answer": "강맹수 교수님이 담당하시는 과목은 다음과 같습니다:\n\n- **과목명**: 확률과통계\n- **학점**: 3학점\n- **시간**: 금요일 09:25-12:10\n- **장소**: 용오름-7206(ITMS실습실)\n- **과목코드**: 560003-71\n\n수강 신청 시 계획서 및 강의 내용 확인이 필요합니다.",
+      "hit": true,
+      "latency_ms": 26739.5,
+      "retrieval_used": [
+        "keyword"
+      ],
+      "neo4j_empty": null
+    },
+    {
+      "category": "course→prof",
+      "question": "확률과통계 담당 교수 누구야",
+      "expected": [
+        "강맹수"
+      ],
+      "answer": "확률과통계 과목의 담당 교수는 강맹수 교수입니다.",
+      "hit": true,
+      "latency_ms": 12293.52,
+      "retrieval_used": [
+        "keyword"
+      ],
+      "neo4j_empty": null
+    },
+    {
+      "category": "prof+day",
+      "question": "강맹수 교수 금요일 수업은?",
+      "expected": [
+        "확률과통계",
+        "금"
+      ],
+      "answer": "강맹수 교수의 금요일 수업은 **확률과통계 (학과코드: 560003-71)** 입니다. 강의는 **용오름-7206(ITMS실습실)**에서 **09:25-12:10**에 진행됩니다.",
+      "hit": true,
+      "latency_ms": 20781.69,
+      "retrieval_used": [
+        "keyword",
+        "graph"
+      ],
+      "neo4j_empty": true
+    },
+    {
+      "category": "prof+day",
+      "question": "김중헌 교수 화요일 수업 뭐 있어",
+      "expected": [
+        "품새",
+        "화"
+      ],
+      "answer": "김중헌 교수의 화요일 수업은 태권도실기대강으로, 시간은 오전 9시 25분부터 오전 11시 10분까지이며 과목 코드는 130011-13입니다.",
+      "hit": true,
+      "latency_ms": 24070.26,
+      "retrieval_used": [
+        "keyword"
+      ],
+      "neo4j_empty": null
+    },
+    {
+      "category": "course→time",
+      "question": "확률과통계 수업 시간 알려줘",
+      "expected": [
+        "금",
+        "09:25",
+        "13:35"
+      ],
+      "answer": "확률과통계 강의는 **09:25 - 12:10** 시간대에 **ITMS실습실 (용오름-7206)**에서 수강하시면 됩니다. 과목 코드는 **560003-71** 입니다.",
+      "hit": true,
+      "latency_ms": 33707.63,
+      "retrieval_used": [
+        "keyword",
+        "graph"
+      ],
+      "neo4j_empty": true
+    },
+    {
+      "category": "course→room",
+      "question": "확률과통계 강의실 어디야",
+      "expected": [
+        "용오름",
+        "7206",
+        "ITMS"
+      ],
+      "answer": "강맹수 교수의 확률과통계 과목은 **용오름-7206(ITMS실습실)** 에서 열립니다.",
+      "hit": true,
+      "latency_ms": 85613.58,
+      "retrieval_used": [
+        "keyword"
+      ],
+      "neo4j_empty": null
+    },
+    {
+      "category": "dept→phone",
+      "question": "물리치료학과 전화번호 알려줘",
+      "expected": [
+        "031-8020-2769",
+        "물리치료학과"
+      ],
+      "answer": "물리치료학과의 전화번호는 **031-8020-2769** 입니다.",
+      "hit": true,
+      "latency_ms": 73843.52,
+      "retrieval_used": [
+        "keyword"
+      ],
+      "neo4j_empty": null
+    },
+    {
+      "category": "dept→phone",
+      "question": "경영학과 전화번호",
+      "expected": [
+        "031-8020-2720",
+        "경영학과"
+      ],
+      "answer": "용인대학교 경영학과의 전화번호는 **031-8020-2720**입니다.",
+      "hit": true,
+      "latency_ms": 41806.39,
+      "retrieval_used": [
+        "keyword"
+      ],
+      "neo4j_empty": null
+    },
+    {
+      "category": "prof→credits",
+      "question": "김중헌 교수 담당 과목 학점 알려줘",
+      "expected": [
+        "학점",
+        "3",
+        "6"
+      ],
+      "answer": "김중헌 교수가 담당하는 과목 중 하나인 **\"쉽게배우는맛보기태권도\"**의 학점은 **3학점**입니다. 확인이 필요한 부분이 없으므로 정확한 정보 제공이 가능합니다.",
+      "hit": true,
+      "latency_ms": 41957.53,
+      "retrieval_used": [
+        "keyword",
+        "semantic"
+      ],
+      "neo4j_empty": null
+    }
+  ]
+}

@@ -257,33 +257,34 @@ def _neo4j_query(question: str) -> List[Dict]:
     results: List[Dict] = []
 
     with driver.session() as session:
-        # 1) 교수 + 요일 교집합 (다중 홉, GraphRAG 특화 쿼리)
-        for name in found_profs:
-            for day in found_days:
+        # 1) 교수 + 요일이 함께 명시되면 교집합만 반환 (정밀도 우선, GraphRAG 특화)
+        if found_profs and found_days:
+            for name in found_profs:
+                for day in found_days:
+                    rows = session.run("""
+                        MATCH (p:Professor {name: $name})-[:TEACHES]->(c:Course)-[:HELD_ON]->(d:Day {name: $day})
+                        OPTIONAL MATCH (c)-[:HAS_TIME]->(tm:Time)
+                        OPTIONAL MATCH (c)-[:LOCATED_IN]->(r:Room)
+                        RETURN p.name AS professor, c.course_name AS course_name,
+                               c.course_type AS course_type, c.credits AS credits,
+                               d.name AS day, tm.range AS time_range, r.name AS room,
+                               p.research_day AS research_day, p.phone AS phone, p.office AS office
+                    """, name=name, day=day).data()
+                    results.extend(rows)
+        # 2) 요일 없이 교수만 언급된 경우 전체 담당 강의 반환
+        elif found_profs:
+            for name in found_profs:
                 rows = session.run("""
-                    MATCH (p:Professor {name: $name})-[:TEACHES]->(c:Course)-[:HELD_ON]->(d:Day {name: $day})
+                    MATCH (p:Professor {name: $name})-[:TEACHES]->(c:Course)
+                    OPTIONAL MATCH (c)-[:HELD_ON]->(d:Day)
                     OPTIONAL MATCH (c)-[:HAS_TIME]->(tm:Time)
                     OPTIONAL MATCH (c)-[:LOCATED_IN]->(r:Room)
                     RETURN p.name AS professor, c.course_name AS course_name,
                            c.course_type AS course_type, c.credits AS credits,
                            d.name AS day, tm.range AS time_range, r.name AS room,
                            p.research_day AS research_day, p.phone AS phone, p.office AS office
-                """, name=name, day=day).data()
+                """, name=name).data()
                 results.extend(rows)
-
-        # 2) 교수 (요일 없거나 요일 매칭 실패 대비 fallback)
-        for name in found_profs:
-            rows = session.run("""
-                MATCH (p:Professor {name: $name})-[:TEACHES]->(c:Course)
-                OPTIONAL MATCH (c)-[:HELD_ON]->(d:Day)
-                OPTIONAL MATCH (c)-[:HAS_TIME]->(tm:Time)
-                OPTIONAL MATCH (c)-[:LOCATED_IN]->(r:Room)
-                RETURN p.name AS professor, c.course_name AS course_name,
-                       c.course_type AS course_type, c.credits AS credits,
-                       d.name AS day, tm.range AS time_range, r.name AS room,
-                       p.research_day AS research_day, p.phone AS phone, p.office AS office
-            """, name=name).data()
-            results.extend(rows)
 
         # 3) 과목 → 담당 교수 + 시간
         for cname in found_courses:

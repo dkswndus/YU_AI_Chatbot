@@ -199,6 +199,27 @@ Roadmap Step 6까지 완성된 파이프라인을 두 평가셋 전량(N=1,000)�
 - **Glossary Coverage 0.9~4.7%**: 사전이 너무 작음 → 확장 지표. 평가셋 실패 케이스에서 자주 나오는 구어체를 사전에 추가하여 개선 여지.
 - **Neo4j 부분 활성 (5~9%)**: Colab 에 Neo4j 미배포. 로컬 재적재 후 재측정 시 교수·과목·요일 관계 질의 정확도 상승 기대.
 
+### 4.2 Relationship Query 특화 평가 (Neo4j 활용 검증, N=10)
+
+**목적:** "Neo4j 를 왜 도입했는가"의 실증.
+큐레이트된 관계 질문 10개(교수↔과목, 교수+요일 교집합, 학과 전화번호 등)를 두 조건에서 실행.
+
+**환경:** 로컬 CPU · exaone3.5:2.4b · BM25 자연어화 개선 반영 후
+
+| 조건 | 정확도 | 평균 지연 | 특이사항 |
+|---|:---:|:---:|---|
+| **with_neo4j** (Neo4j 활성 + v2 스키마) | **100%** (10/10) | 46.4s | graph 선택된 2건에서 Neo4j 활용 (neo4j_empty=False) |
+| **no_neo4j** (컨테이너 중지) | **100%** (10/10) | 44.3s | graph 선택된 케이스에서 BM25/semantic 로 우아하게 fallback |
+
+**해석:**
+
+1. **BM25 자연어화(§4.1의 후속안, `_build_natural_content`)가 매우 강력** — course chunk 의 metadata 를 "강맹수 교수 확률과통계 3학점 금요일 09:25-12:10 용오름-7206" 같은 자연어로 저장하니, BM25 만으로도 대부분의 관계 질문에 답 가능.
+2. **파이프라인 견고성 입증** — Neo4j 부재 시 조건부 라우팅이 다른 검색기로 우아하게 fallback. 시스템 실패 지점(single point of failure)이 없음.
+3. **Neo4j 의 잠재 가치는 더 복잡한 다중 홉 질문에서 검증 필요** — 예: "김중헌이 담당하는 과목의 선수과목", "AI학과 3학년 필수과목 중 화요일 오전 수업" 처럼 3단계 이상 관계 탐색. 현 데이터 스키마에는 선수과목·학년별 필수과목 관계가 없어 큐레이트 불가.
+
+**포트폴리오 서술 (정직한 회고):**
+> "BM25 인덱싱 개선으로 대부분의 관계 질문이 keyword 검색만으로 해결되어, 이 데이터 규모(1,369 chunks)에서는 Neo4j 의 추가 정확도 기여가 미미했다. 다만 파이프라인의 조건부 라우팅으로 Neo4j 부재 시 자동 fallback 되어, 시스템 안정성은 확보됐다. Neo4j 의 진짜 가치는 스키마 확장(선수과목·학년 관계) 후 다중 홉 질문에서 재검증할 계획이다."
+
 **예상 효과 방향** (검증 전 가설, 실측으로 확인):
 
 | 단계 | Recall | Latency | LLM Calls | Answer Correctness |
@@ -414,4 +435,4 @@ python scripts/eval/run_kpi.py --config full --dataset student_style --save-per-
 | 10 | 평가 스크립트 (KPI 자동 집계) | ✅ 완료 — `scripts/eval/run_kpi.py` |
 | 11 | Full Pipeline 실측 (N=1,000 × 2 datasets, Colab T4 GPU) | ✅ 완료 — §4.1 참조 |
 | 12 | Ablation 각 조합 실측 (Vector Only → +BM25 → …) | ⏳ 향후 (config 토글 로직 추가 필요) |
-| 13 | Neo4j 활성 상태 재측정 (Relationship Query Accuracy 확보) | ⏳ 로컬 Docker 환경 |
+| 13 | Neo4j 활성 상태 재측정 (Relationship Query Accuracy) | ✅ 완료 — §4.2 참조 |
