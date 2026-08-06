@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from app.rag.chunk_id import stable_chunk_id
+
 SourceType = Literal["graph", "keyword", "semantic"]
 
 
@@ -33,9 +35,10 @@ def from_chroma(result: Dict, rank: int) -> Evidence:
     """ChromaDB 결과 → Evidence.
 
     입력: {"text": str, "metadata": dict, "distance": float}
+    chunk_id 는 stable_chunk_id 로 재구성 (gold labeling 과 매칭 위해).
     """
     md = result.get("metadata", {}) or {}
-    local_id = md.get("chunk_id") or md.get("doc_id") or f"unranked_{rank}"
+    local_id = stable_chunk_id(md, fallback_idx=rank)
     text = result.get("text") or result.get("document", "")
     return Evidence(
         evidence_id=f"chroma:{local_id}",
@@ -54,7 +57,7 @@ def from_bm25(result: Dict, rank: int) -> Evidence:
     입력: {"text": str, "metadata": dict, "score": float}
     """
     md = result.get("metadata", {}) or {}
-    local_id = md.get("chunk_id") or md.get("doc_id") or f"unranked_{rank}"
+    local_id = stable_chunk_id(md, fallback_idx=rank)
     text = result.get("text") or ""
     return Evidence(
         evidence_id=f"bm25:{local_id}",

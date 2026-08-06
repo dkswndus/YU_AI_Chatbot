@@ -41,6 +41,7 @@ from app.rag.evidence           import (
     Evidence, from_chroma, from_bm25, from_neo4j
 )
 from app.rag.fusion             import rrf_fuse
+from app.rag.ablation           import get_ablation_config
 
 _llm = None  # lazy init
 
@@ -163,6 +164,7 @@ class RAGState(TypedDict, total=False):
     answer:              str
     _timings:            Dict[str, float]
     _metrics:            Dict
+    _ablation_cfg:       Dict            # 실험 조건 (get_ablation_config)
 
 
 # ── metrics helpers ───────────────────────────────────────────────────
@@ -349,13 +351,26 @@ def analyze_node(state: RAGState) -> RAGState:
 
 @_timed("rewrite")
 def rewrite_node(state: RAGState) -> RAGState:
-    """2. 조건부 Rewrite: query_analysis.needs_rewrite=False 이면 스킵."""
-    qa = state.get("query_analysis", {})
-    needs = qa.get("needs_rewrite", True)
-    if not needs:
+    """2. Rewrite (ablation 3 모드: off / conditional / force).
+
+    - off: 원문 그대로 사용, LLM 미호출
+    - conditional: Query Analysis 의 needs_rewrite=True 일 때만 실행
+    - force: 항상 실행 (Ablation 실험용)
+    """
+    cfg = state.get("_ablation_cfg") or get_ablation_config()
+    mode = cfg.get("rewrite_mode", "conditional")
+
+    if mode == "off":
         state["rewritten"] = state["question"]
         return state
 
+    if mode == "conditional":
+        qa = state.get("query_analysis", {})
+        if not qa.get("needs_rewrite", True):
+            state["rewritten"] = state["question"]
+            return state
+
+    # force 또는 conditional 트리거됨 → LLM 호출
     _metrics(state)["usage"]["rewrite_called"] = True
     question = state["question"]
     try:
@@ -371,10 +386,18 @@ def rewrite_node(state: RAGState) -> RAGState:
 
 @_timed("retrieval")
 def retrieval_node(state: RAGState) -> RAGState:
-    """3. 조건부 검색. Query Analysis 의 retrieval_types 에 따라 선택적 호출."""
+    """3. 조건부 검색.
+
+    Ablation config 의 use_bm25 / use_chroma / neo4j_mode 를 우선 준수.
+    개별 검색기가 활성 상태일 때만 호출. neo4j_mode 는 3 모드:
+      off:         호출 안 함
+      conditional: Query Analysis 의 retrieval_types 에 'graph' 있을 때만
+      always:      매 질문 강제 호출
+    """
+    cfg = state.get("_ablation_cfg") or get_ablation_config()
+
     qa = state.get("query_analysis", {})
     types = set(qa.get("retrieval_types", []))
-    # 안전망: 지정 없으면 semantic + keyword (Neo4j 는 명확한 엔티티가 없으면 노이즈)
     if not types:
         types = {"semantic", "keyword"}
 
@@ -384,19 +407,27 @@ def retrieval_node(state: RAGState) -> RAGState:
     used: List[str] = []
     by_source: Dict[str, List[Evidence]] = {}
 
-    if "keyword" in types:
+    # BM25
+    if cfg["use_bm25"]:
         results = bm25_search(query, n_results=RETRIEVAL_TOPK)
         by_source["bm25"] = [from_bm25(r, i + 1) for i, r in enumerate(results)]
         used.append("keyword")
         m["reliability"]["retrieval_empty"]["bm25"] = (len(results) == 0)
 
-    if "semantic" in types:
+    # ChromaDB
+    if cfg["use_chroma"]:
         results = chroma_search(query, n_results=RETRIEVAL_TOPK)
         by_source["chroma"] = [from_chroma(r, i + 1) for i, r in enumerate(results)]
         used.append("semantic")
         m["reliability"]["retrieval_empty"]["chroma"] = (len(results) == 0)
 
-    if "graph" in types:
+    # Neo4j (3 모드)
+    neo4j_mode = cfg.get("neo4j_mode", "off")
+    should_call_neo4j = (
+        neo4j_mode == "always" or
+        (neo4j_mode == "conditional" and "graph" in types)
+    )
+    if should_call_neo4j:
         rows = _neo4j_query(question)
         by_source["neo4j"] = [from_neo4j(r, i + 1) for i, r in enumerate(rows)]
         used.append("graph")
@@ -409,10 +440,23 @@ def retrieval_node(state: RAGState) -> RAGState:
 
 @_timed("fusion")
 def fusion_node(state: RAGState) -> RAGState:
-    """4. RRF: 순위 기반 통합. 검색기 간 교집합에 agreement bonus 부여."""
+    """4. RRF: 순위 기반 통합. use_fusion=False 이면 단순 concat."""
+    cfg = state.get("_ablation_cfg") or get_ablation_config()
+
     by_source = state.get("evidences_by_source", {})
     lists = [lst for lst in by_source.values() if lst]
-    fused = rrf_fuse(lists, top_n=FUSION_TOP_N) if lists else []
+
+    if cfg["use_fusion"] and lists:
+        # RRF fusion
+        fused = rrf_fuse(lists, top_n=FUSION_TOP_N)
+    else:
+        # 단순 concat (Union). rank 재부여.
+        fused = []
+        for lst in lists:
+            fused.extend(lst)
+        # 원 rank 유지, 최대 FUSION_TOP_N
+        fused = fused[:FUSION_TOP_N]
+
     state["fused_evidences"] = fused
     _metrics(state)["usage"]["candidates_before_rerank"] = len(fused)
     return state
@@ -433,9 +477,20 @@ def _rerank_text(ev: Evidence) -> str:
 
 @_timed("rerank")
 def rerank_node(state: RAGState) -> RAGState:
-    """5. Cross-Encoder Rerank → Top-K 최종 근거."""
+    """5. Cross-Encoder Rerank → Top-K 최종 근거. use_rerank=False 이면 스킵."""
+    cfg = state.get("_ablation_cfg") or get_ablation_config()
     fused = state.get("fused_evidences", [])
     usage = _metrics(state)["usage"]
+
+    if not cfg["use_rerank"]:
+        # Rerank 스킵: fusion 상위 RERANK_TOP_K 만 잘라서 그대로 반환
+        top_k = []
+        for new_rank, ev in enumerate(fused[:RERANK_TOP_K], 1):
+            top_k.append(ev.model_copy(update={"rank": new_rank}))
+        state["top_evidences"] = top_k
+        usage["top_k_final"] = len(top_k)
+        return state
+
     if not fused:
         state["top_evidences"] = []
         usage["top_k_final"] = 0
@@ -551,6 +606,8 @@ def answer_with_metadata(question: str, history: List[Dict] = None) -> Dict:
     반환 구조는 docs/EXPERIMENT.md §8 (실험 로그 스키마)의 per-query 부분과
     일치하도록 설계됨. 평가 스크립트가 그대로 집계 가능.
     """
+    ablation_cfg = get_ablation_config()
+
     initial_state: RAGState = {
         "question":            question,
         "original_question":   question,
@@ -565,6 +622,7 @@ def answer_with_metadata(question: str, history: List[Dict] = None) -> Dict:
         "answer":              "",
         "_timings":            {},
         "_metrics":            {},
+        "_ablation_cfg":       ablation_cfg,
     }
 
     error: Optional[str] = None
