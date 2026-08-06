@@ -1,0 +1,4331 @@
+{
+  "meta": {
+    "seed": 42,
+    "total": 200,
+    "targets": {
+      "semantic": 50,
+      "entity": 50,
+      "relational": 50,
+      "simple": 30,
+      "ambiguous": 20
+    },
+    "relational_sub_targets": {
+      "single-hop": 15,
+      "constraint": 15,
+      "multi-hop": 15,
+      "non-existent": 5
+    },
+    "counts": {
+      "semantic": 50,
+      "entity": 50,
+      "simple": 30,
+      "ambiguous": 20,
+      "relational": 50
+    },
+    "relational_sub_counts": {
+      "single-hop": 15,
+      "constraint": 15,
+      "multi-hop": 15,
+      "non-existent": 5
+    },
+    "shortage": {},
+    "spec_ref": "docs/EXPERIMENT.md §4.3.1",
+    "gold_labeling": {
+      "date": "2026-08-05",
+      "method": "rule-based + chroma-fallback",
+      "chunks_used": 1369,
+      "confidence_counts": {
+        "low": 47,
+        "high": 104,
+        "medium": 49
+      },
+      "review_needed": 47,
+      "review_target": 30
+    }
+  },
+  "dataset": [
+    {
+      "question_id": "Q001",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "KCU 시험시간 겹칠 수 있다던데 진짜임?",
+      "source": "natural_v2",
+      "original_id": 63,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q002",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "진짜 7330 몇 동이야?",
+      "source": "student_style",
+      "original_id": 651,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920383-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q003",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "월 9시 25분에 들을 수 있는 교양 뭐 있음?",
+      "source": "natural_v2",
+      "original_id": 578,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q004",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "중국학과 졸업하려면 12학점 맞지 좀 알려줘",
+      "source": "student_style",
+      "original_id": 898,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_중국학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q005",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "군사학과 부전공 가능함?",
+      "source": "student_style",
+      "original_id": 669,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_군사학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q006",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "영어 3학년이면 이번 학기에 뭐 듣는 게 정석이야?",
+      "source": "natural_v2",
+      "original_id": 531,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910035-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q007",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "스토리텔링과콘텐츠 레벨 잘못 들으면 F 뜸",
+      "source": "student_style",
+      "original_id": 788,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950031-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q008",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "유도론 수강포기 가능함 이거 맞냐",
+      "source": "student_style",
+      "original_id": 364,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950007-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q009",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "진짜 미생물학 레벨테스트 있음?",
+      "source": "student_style",
+      "original_id": 782,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950031-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q010",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "헐 웰리스디자인MD 2026학번부터 필수임?",
+      "source": "student_style",
+      "original_id": 860,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q011",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "웰리스디자인MD 2026학번부터 필수임",
+      "source": "student_style",
+      "original_id": 392,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q012",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "수강신청 조건 빡셈?",
+      "source": "natural_v2",
+      "original_id": 463,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q013",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "인문리터러시MD 과목 뭐로 구성됨?",
+      "source": "student_style",
+      "original_id": 42,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_120353-11"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q014",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "겨울계절 신청 시간 10시 시작 맞지?",
+      "source": "natural_v2",
+      "original_id": 124,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q015",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "내가 관광경영인데 다른 전공 수업 들으면 손해 봄?",
+      "source": "natural_v2",
+      "original_id": 242,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q016",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "2학기 중 봉사는 겨울계절 처리 맞음?",
+      "source": "natural_v2",
+      "original_id": 4,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q017",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "무도코칭MD 하려면 스토리텔링과콘텐츠 꼭 들어야 돼?",
+      "source": "student_style",
+      "original_id": 586,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950029-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q018",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "영어 과목 중에 온라인 있는 거 뭐 있어",
+      "source": "natural_v2",
+      "original_id": 533,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910035-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q019",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "물리치료 수업 중에 월요일 몰빵 가능?",
+      "source": "natural_v2",
+      "original_id": 322,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_info_0"
+      ],
+      "required_entities": [
+        "월"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q020",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "무도학과 졸업하려면 20학점 맞지 알려주라",
+      "source": "student_style",
+      "original_id": 440,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_980005-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q021",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "광고프로모션MD 하려면 호스피탈리티마케팅 꼭 들어야 돼?",
+      "source": "student_style",
+      "original_id": 236,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530005-89"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q022",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "헐 실용중국어회화중급 점수 몇 점 넘어야 인정됨?",
+      "source": "student_style",
+      "original_id": 27,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_170053-13"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q023",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "수강취소 조건 빡셈?",
+      "source": "natural_v2",
+      "original_id": 469,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q024",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "진짜 13107 강의실 어디야?",
+      "source": "student_style",
+      "original_id": 832,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q025",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "헐 경영학과 과사 031-8020-3273 맞나?",
+      "source": "student_style",
+      "original_id": 130,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_경영학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q026",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "사회복지 과목 중에 온라인 있는 거 뭐 있어",
+      "source": "natural_v2",
+      "original_id": 424,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920069-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q027",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "물리치료학과에서 무도교육학 열려?",
+      "source": "student_style",
+      "original_id": 166,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_물리치료학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q028",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "월 9시 25분 비는 시간 없이 짤 수 있나",
+      "source": "natural_v2",
+      "original_id": 577,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950007-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q029",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "관광경영 수업 용오름-7202 쓰는 거 뭐 있음?",
+      "source": "natural_v2",
+      "original_id": 173,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_430063-58"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q030",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "English2 레벨테스트 있음?",
+      "source": "student_style",
+      "original_id": 845,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950031-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q031",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "경찰행정 수업 화목으로만 짤 수 있어?",
+      "source": "natural_v2",
+      "original_id": 147,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_경찰행정학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q032",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "태권도학과 졸업학점 몇 점 채워야 함?",
+      "source": "student_style",
+      "original_id": 122,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_태권도학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q033",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "헐 8201 어디 건물임?",
+      "source": "student_style",
+      "original_id": 407,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_200027-20"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q034",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "나 급한데 물리치료학과 졸업학점 몇 점 채워야 함?",
+      "source": "student_style",
+      "original_id": 421,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_물리치료학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q035",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "나 급한데 한식조리전문가MD 2026학번부터 필수임?",
+      "source": "student_style",
+      "original_id": 292,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_최유진"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q036",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "안전관리자과정MD 과목 뭐로 구성됨?",
+      "source": "student_style",
+      "original_id": 769,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510159-81"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q037",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "진짜 마케팅원리 필수야 선택이야?",
+      "source": "student_style",
+      "original_id": 864,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920231-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q038",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "실용중국어회화중급 이거 졸업하려면 꼭 들어야 돼 맞음?",
+      "source": "student_style",
+      "original_id": 661,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950023-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q039",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "진짜 9501 어디 건물임?",
+      "source": "student_style",
+      "original_id": 44,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_200027-20"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q040",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "이거 경영학과 전공 몇 학점 들어야 돼?",
+      "source": "student_style",
+      "original_id": 689,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_경영학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q041",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "문예-11808 어디 건물임?",
+      "source": "natural_v2",
+      "original_id": 294,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_200027-20"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q042",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "스마트관광스타트업MD 2026학번부터 필수임 맞음?",
+      "source": "student_style",
+      "original_id": 96,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q043",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "봉사하고 나서 확인서랑 소감문 둘 다 내야 함?",
+      "source": "natural_v2",
+      "original_id": 400,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q044",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "헐 여가사회론 레벨테스트 있음?",
+      "source": "student_style",
+      "original_id": 981,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950007-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q045",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "내가 실용음악인데 다른 전공 수업 들으면 손해 봄?",
+      "source": "natural_v2",
+      "original_id": 250,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q046",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "저기 식품조리학과 전화번호 뭐야?",
+      "source": "student_style",
+      "original_id": 223,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_식품조리학과, 식품영양학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q047",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "경영통계학 7413에서 함?",
+      "source": "student_style",
+      "original_id": 299,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_400005-54"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q048",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "경영학과 과사 031-8020-3469 맞나 맞음?",
+      "source": "student_style",
+      "original_id": 3,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_경영학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q049",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "AI·비즈니스인사이트MD 이수증 언제 나와",
+      "source": "student_style",
+      "original_id": 287,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q050",
+      "category": "semantic",
+      "difficulty": null,
+      "question": "저기 골프학부 과사 031-8020-2746 맞나?",
+      "source": "student_style",
+      "original_id": 585,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_250097-70"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q051",
+      "category": "entity",
+      "difficulty": null,
+      "question": "인공지능 이론만 함 아니면 코딩도 함?",
+      "source": "natural_v2",
+      "original_id": 673,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550031-71",
+        "academic_001_course_550031-72",
+        "academic_001_course_550031-73",
+        "academic_001_course_550031-74",
+        "academic_001_course_550031-75"
+      ],
+      "required_entities": [
+        "인공지능"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q052",
+      "category": "entity",
+      "difficulty": null,
+      "question": "진짜 기초조리 패논패임?",
+      "source": "student_style",
+      "original_id": 674,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530067-88",
+        "academic_001_course_530067-90"
+      ],
+      "required_entities": [
+        "기초조리"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q053",
+      "category": "entity",
+      "difficulty": null,
+      "question": "이번 학기 AI수학 오후반만 있음?",
+      "source": "natural_v2",
+      "original_id": 628,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560011-71",
+        "academic_001_course_560011-72",
+        "academic_001_course_560011-73",
+        "academic_001_course_560011-74",
+        "academic_001_course_560011-75"
+      ],
+      "required_entities": [
+        "AI수학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q054",
+      "category": "entity",
+      "difficulty": null,
+      "question": "웰빙식생활과건강랑 직업과건강 둘 다 들으면 과부하임?",
+      "source": "natural_v2",
+      "original_id": 592,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920119-01",
+        "academic_001_course_920119-02",
+        "academic_001_course_920157-01",
+        "academic_001_course_920157-02"
+      ],
+      "required_entities": [
+        "웰빙식생활과건강",
+        "직업과건강"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q055",
+      "category": "entity",
+      "difficulty": null,
+      "question": "딥러닝 듣고 다음에 뭘 들어야 함?",
+      "source": "natural_v2",
+      "original_id": 275,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550179-73"
+      ],
+      "required_entities": [
+        "딥러닝"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q056",
+      "category": "entity",
+      "difficulty": null,
+      "question": "웹·앱프로그래밍 듣기 전에 MOS따라잡기 알아야 돼?",
+      "source": "natural_v2",
+      "original_id": 595,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920501-01",
+        "academic_001_course_920501-02",
+        "academic_001_course_560049-75"
+      ],
+      "required_entities": [
+        "웹·앱프로그래밍",
+        "MOS따라잡기"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q057",
+      "category": "entity",
+      "difficulty": null,
+      "question": "AI융합학부에서 기초영양학 열려?",
+      "source": "student_style",
+      "original_id": 390,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530045-89",
+        "academic_001_course_530045-91"
+      ],
+      "required_entities": [
+        "기초영양학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q058",
+      "category": "entity",
+      "difficulty": null,
+      "question": "진짜 한식조리전문가MD 하려면 기초조리 꼭 들어야 돼?",
+      "source": "student_style",
+      "original_id": 386,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530067-88",
+        "academic_001_course_530067-90"
+      ],
+      "required_entities": [
+        "기초조리"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q059",
+      "category": "entity",
+      "difficulty": null,
+      "question": "장우남 연구일 목 맞음 이거 맞냐",
+      "source": "student_style",
+      "original_id": 237,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_570053-84",
+        "academic_001_course_570041-84",
+        "academic_001_course_570083-84",
+        "academic_001_md_professor_장우남"
+      ],
+      "required_entities": [
+        "장우남"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q060",
+      "category": "entity",
+      "difficulty": null,
+      "question": "R을이용한데이터분석 훈련단만 신청 가능 이런 제한 있음?",
+      "source": "natural_v2",
+      "original_id": 96,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550171-71",
+        "academic_001_course_550171-72",
+        "academic_001_course_550171-73",
+        "academic_001_course_550171-74",
+        "academic_001_course_550171-75"
+      ],
+      "required_entities": [
+        "R을이용한데이터분석"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q061",
+      "category": "entity",
+      "difficulty": null,
+      "question": "자바프로그래밍랑 AI수학 같은 날 몰려있냐",
+      "source": "natural_v2",
+      "original_id": 743,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560011-71",
+        "academic_001_course_560011-72",
+        "academic_001_course_560053-71",
+        "academic_001_course_560011-73",
+        "academic_001_course_560011-74"
+      ],
+      "required_entities": [
+        "자바프로그래밍",
+        "AI수학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q062",
+      "category": "entity",
+      "difficulty": null,
+      "question": "빅데이터분석및응용 전공이야 교양이야?",
+      "source": "natural_v2",
+      "original_id": 420,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560031-75"
+      ],
+      "required_entities": [
+        "빅데이터분석및응용"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q063",
+      "category": "entity",
+      "difficulty": null,
+      "question": "AI 쪽 가려면 통계적데이터마이닝 먼저 듣는 게 맞음?",
+      "source": "natural_v2",
+      "original_id": 16,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560063-75"
+      ],
+      "required_entities": [
+        "통계적데이터마이닝"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q064",
+      "category": "entity",
+      "difficulty": null,
+      "question": "경호학과에서 기초조리 열려?",
+      "source": "student_style",
+      "original_id": 884,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_경호학과"
+      ],
+      "required_entities": [
+        "기초조리"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q065",
+      "category": "entity",
+      "difficulty": null,
+      "question": "MOS따라잡기 시험 대면임 온라인임?",
+      "source": "natural_v2",
+      "original_id": 76,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920501-01",
+        "academic_001_course_920501-02"
+      ],
+      "required_entities": [
+        "MOS따라잡기"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q066",
+      "category": "entity",
+      "difficulty": null,
+      "question": "최유진 교수님 연구실 용-7214 맞아 ㅠㅠ",
+      "source": "student_style",
+      "original_id": 412,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920529-01",
+        "academic_001_course_960009-02",
+        "academic_001_course_530063-88",
+        "academic_001_course_530063-90",
+        "academic_001_md_professor_최유진"
+      ],
+      "required_entities": [
+        "최유진"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q067",
+      "category": "entity",
+      "difficulty": null,
+      "question": "체육학과 교필 몇 학점임 빨리",
+      "source": "student_style",
+      "original_id": 50,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_체육학과"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q068",
+      "category": "entity",
+      "difficulty": null,
+      "question": "김용철 연구일 화 맞음 빨리",
+      "source": "student_style",
+      "original_id": 293,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550165-71",
+        "academic_001_course_550165-72",
+        "academic_001_course_550165-73",
+        "academic_001_course_550165-74",
+        "academic_001_course_550165-75"
+      ],
+      "required_entities": [
+        "김용철"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q069",
+      "category": "entity",
+      "difficulty": null,
+      "question": "운동생리학 레벨 잘못 들으면 F 뜸",
+      "source": "student_style",
+      "original_id": 618,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_200093-20"
+      ],
+      "required_entities": [
+        "운동생리학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q070",
+      "category": "entity",
+      "difficulty": null,
+      "question": "중국학입문 7413에서 함?",
+      "source": "student_style",
+      "original_id": 665,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_470001-64",
+        "academic_001_course_470001-65"
+      ],
+      "required_entities": [
+        "중국학입문"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q071",
+      "category": "entity",
+      "difficulty": null,
+      "question": "지경희 교수님 연구실 용-7214 맞아 ㅠㅠ",
+      "source": "student_style",
+      "original_id": 692,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510147-81",
+        "academic_001_course_510151-81",
+        "academic_001_md_professor_지경희"
+      ],
+      "required_entities": [
+        "지경희"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q072",
+      "category": "entity",
+      "difficulty": null,
+      "question": "진짜 박현호 연구일 월 맞음?",
+      "source": "student_style",
+      "original_id": 498,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_460037-62",
+        "academic_001_course_460037-63",
+        "academic_001_course_460085-62",
+        "academic_001_md_professor_박현호"
+      ],
+      "required_entities": [
+        "박현호"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q073",
+      "category": "entity",
+      "difficulty": null,
+      "question": "생활물리치료 시험 대면임 온라인임?",
+      "source": "natural_v2",
+      "original_id": 440,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920175-01",
+        "academic_001_course_920175-02"
+      ],
+      "required_entities": [
+        "생활물리치료"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q074",
+      "category": "entity",
+      "difficulty": null,
+      "question": "기초영양학 점수 몇 점 넘어야 인정됨 빨리",
+      "source": "student_style",
+      "original_id": 388,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530045-89",
+        "academic_001_course_530045-91"
+      ],
+      "required_entities": [
+        "기초영양학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q075",
+      "category": "entity",
+      "difficulty": null,
+      "question": "인공지능의이해와활용 컴퓨터비전 같이 담아도 돼?",
+      "source": "natural_v2",
+      "original_id": 696,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-01",
+        "academic_001_course_910043-02",
+        "academic_001_course_910043-03",
+        "academic_001_course_910043-04",
+        "academic_001_course_910043-05"
+      ],
+      "required_entities": [
+        "인공지능의이해와활용",
+        "컴퓨터비전",
+        "인공지능"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q076",
+      "category": "entity",
+      "difficulty": null,
+      "question": "나 급한데 지경희 교수님 연구실 용-7214 맞아?",
+      "source": "student_style",
+      "original_id": 542,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510147-81",
+        "academic_001_course_510151-81",
+        "academic_001_md_professor_지경희"
+      ],
+      "required_entities": [
+        "지경희"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q077",
+      "category": "entity",
+      "difficulty": null,
+      "question": "컴공 3학년이면 운영체제 이번에 듣는 거 맞냐",
+      "source": "natural_v2",
+      "original_id": 840,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550033-73"
+      ],
+      "required_entities": [
+        "운영체제"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q078",
+      "category": "entity",
+      "difficulty": null,
+      "question": "인공지능의이해와활용 듣기 전에 패턴인식 알아야 돼?",
+      "source": "natural_v2",
+      "original_id": 685,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-01",
+        "academic_001_course_910043-02",
+        "academic_001_course_910043-03",
+        "academic_001_course_910043-04",
+        "academic_001_course_910043-05"
+      ],
+      "required_entities": [
+        "인공지능의이해와활용",
+        "인공지능",
+        "패턴인식"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q079",
+      "category": "entity",
+      "difficulty": null,
+      "question": "경찰수사론 교필임 빨리",
+      "source": "student_style",
+      "original_id": 251,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_460095-62"
+      ],
+      "required_entities": [
+        "경찰수사론"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q080",
+      "category": "entity",
+      "difficulty": null,
+      "question": "아 일반화학 재수강 되냐 진짜",
+      "source": "student_style",
+      "original_id": 534,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510129-81"
+      ],
+      "required_entities": [
+        "일반화학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q081",
+      "category": "entity",
+      "difficulty": null,
+      "question": "AI수학 이론만 함 아니면 코딩도 함?",
+      "source": "natural_v2",
+      "original_id": 32,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560011-71",
+        "academic_001_course_560011-72",
+        "academic_001_course_560011-73",
+        "academic_001_course_560011-74",
+        "academic_001_course_560011-75"
+      ],
+      "required_entities": [
+        "AI수학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q082",
+      "category": "entity",
+      "difficulty": null,
+      "question": "영화촬영기초 필수야 선택이야?",
+      "source": "student_style",
+      "original_id": 913,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_340021-46"
+      ],
+      "required_entities": [
+        "영화촬영기초"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q083",
+      "category": "entity",
+      "difficulty": null,
+      "question": "인공지능랑 생활물리치료 시간 겹치냐",
+      "source": "natural_v2",
+      "original_id": 678,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920175-01",
+        "academic_001_course_920175-02",
+        "academic_001_course_550031-71",
+        "academic_001_course_550031-72",
+        "academic_001_course_550031-73"
+      ],
+      "required_entities": [
+        "생활물리치료",
+        "인공지능"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q084",
+      "category": "entity",
+      "difficulty": null,
+      "question": "영어인데 창의적종합설계(캡스톤디자인) 들으면 전공으로 인정됨?",
+      "source": "natural_v2",
+      "original_id": 543,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550175-73"
+      ],
+      "required_entities": [
+        "창의적종합설계(캡스톤디자인)"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q085",
+      "category": "entity",
+      "difficulty": null,
+      "question": "김은화 학교 오는 날 뭐야?",
+      "source": "student_style",
+      "original_id": 848,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-02",
+        "academic_001_course_920503-01",
+        "academic_001_course_560001-71",
+        "academic_001_course_560001-72",
+        "academic_001_course_560053-71"
+      ],
+      "required_entities": [
+        "김은화"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q086",
+      "category": "entity",
+      "difficulty": null,
+      "question": "문화콘텐츠학과에서 경찰수사론 열려?",
+      "source": "student_style",
+      "original_id": 274,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_dept_문화콘텐츠학과"
+      ],
+      "required_entities": [
+        "경찰수사론"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/dept"
+    },
+    {
+      "question_id": "Q087",
+      "category": "entity",
+      "difficulty": null,
+      "question": "실용중국어회화초급 재수강 되냐 진짜",
+      "source": "student_style",
+      "original_id": 231,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_470009-64",
+        "academic_001_course_470009-65"
+      ],
+      "required_entities": [
+        "실용중국어회화초급"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q088",
+      "category": "entity",
+      "difficulty": null,
+      "question": "빅데이터분석및응용 이번 학기 열렸냐?",
+      "source": "natural_v2",
+      "original_id": 417,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560031-75"
+      ],
+      "required_entities": [
+        "빅데이터분석및응용"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q089",
+      "category": "entity",
+      "difficulty": null,
+      "question": "이현주 연구일 언제임?",
+      "source": "student_style",
+      "original_id": 259,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920065-01",
+        "academic_001_course_920505-01",
+        "academic_001_course_510109-81",
+        "academic_001_md_professor_이현주"
+      ],
+      "required_entities": [
+        "이현주"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q090",
+      "category": "entity",
+      "difficulty": null,
+      "question": "이거 인사관리 재수강 되냐?",
+      "source": "student_style",
+      "original_id": 805,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_400025-54"
+      ],
+      "required_entities": [
+        "인사관리"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q091",
+      "category": "entity",
+      "difficulty": null,
+      "question": "English2 패논패임 알려주라",
+      "source": "student_style",
+      "original_id": 867,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950031-01"
+      ],
+      "required_entities": [],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q092",
+      "category": "entity",
+      "difficulty": null,
+      "question": "R을이용한데이터분석 이론만 함 아니면 코딩도 함?",
+      "source": "natural_v2",
+      "original_id": 93,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550171-71",
+        "academic_001_course_550171-72",
+        "academic_001_course_550171-73",
+        "academic_001_course_550171-74",
+        "academic_001_course_550171-75"
+      ],
+      "required_entities": [
+        "R을이용한데이터분석"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q093",
+      "category": "entity",
+      "difficulty": null,
+      "question": "클라우드와창업 훈련단만 신청 가능 이런 제한 있음?",
+      "source": "natural_v2",
+      "original_id": 912,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920299-01"
+      ],
+      "required_entities": [
+        "클라우드와창업"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q094",
+      "category": "entity",
+      "difficulty": null,
+      "question": "클라우드와창업 분반 여러 개면 뭐가 다름",
+      "source": "natural_v2",
+      "original_id": 905,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920299-01"
+      ],
+      "required_entities": [
+        "클라우드와창업"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q095",
+      "category": "entity",
+      "difficulty": null,
+      "question": "R을이용한데이터분석 듣기 전에 통계적데이터마이닝 알아야 돼?",
+      "source": "natural_v2",
+      "original_id": 87,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550171-71",
+        "academic_001_course_550171-72",
+        "academic_001_course_550171-73",
+        "academic_001_course_550171-74",
+        "academic_001_course_550171-75"
+      ],
+      "required_entities": [
+        "R을이용한데이터분석",
+        "통계적데이터마이닝"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q096",
+      "category": "entity",
+      "difficulty": null,
+      "question": "실용중국어회화초급 필수야 선택이야",
+      "source": "student_style",
+      "original_id": 196,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_470009-64",
+        "academic_001_course_470009-65"
+      ],
+      "required_entities": [
+        "실용중국어회화초급"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q097",
+      "category": "entity",
+      "difficulty": null,
+      "question": "웰빙식생활과건강 듣기 전에 MOS따라잡기 알아야 돼?",
+      "source": "natural_v2",
+      "original_id": 583,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920119-01",
+        "academic_001_course_920119-02",
+        "academic_001_course_920501-01",
+        "academic_001_course_920501-02"
+      ],
+      "required_entities": [
+        "웰빙식생활과건강",
+        "MOS따라잡기"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q098",
+      "category": "entity",
+      "difficulty": null,
+      "question": "텍스트마이닝 훈련단만 신청 가능 이런 제한 있음?",
+      "source": "natural_v2",
+      "original_id": 927,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560039-75"
+      ],
+      "required_entities": [
+        "텍스트마이닝"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q099",
+      "category": "entity",
+      "difficulty": null,
+      "question": "박진수가 하는 과목 싹 알려줘",
+      "source": "natural_v2",
+      "original_id": 378,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550171-71",
+        "academic_001_course_550171-72",
+        "academic_001_course_560011-71",
+        "academic_001_course_560011-72",
+        "academic_001_course_550171-73"
+      ],
+      "required_entities": [
+        "박진수"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q100",
+      "category": "entity",
+      "difficulty": null,
+      "question": "안정란 연구실 어딨는지 알려줘",
+      "source": "natural_v2",
+      "original_id": 513,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920069-01",
+        "academic_001_course_920299-01"
+      ],
+      "required_entities": [
+        "안정란"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q101",
+      "category": "simple",
+      "difficulty": null,
+      "question": "생활물리치료 몇 학점이야",
+      "source": "natural_v2",
+      "original_id": 434,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920175-01",
+        "academic_001_course_920175-02"
+      ],
+      "required_entities": [
+        "생활물리치료"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q102",
+      "category": "simple",
+      "difficulty": null,
+      "question": "그럼 김판기 교수님 번호 뭐임?",
+      "source": "student_style",
+      "original_id": 829,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510067-81",
+        "academic_001_course_510123-81",
+        "academic_001_md_professor_김판기"
+      ],
+      "required_entities": [
+        "김판기"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q103",
+      "category": "simple",
+      "difficulty": null,
+      "question": "안정란 전화번호도 책자에 나와?",
+      "source": "natural_v2",
+      "original_id": 514,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920069-01",
+        "academic_001_course_920299-01"
+      ],
+      "required_entities": [
+        "안정란"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q104",
+      "category": "simple",
+      "difficulty": null,
+      "question": "저기 기업경영과경제의이해 몇 학점이야?",
+      "source": "student_style",
+      "original_id": 853,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_400013-54",
+        "academic_001_course_400013-55"
+      ],
+      "required_entities": [
+        "기업경영과경제의이해"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q105",
+      "category": "simple",
+      "difficulty": null,
+      "question": "컴퓨터활용 몇 학점이야",
+      "source": "natural_v2",
+      "original_id": 888,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910013-01",
+        "academic_001_course_910013-02"
+      ],
+      "required_entities": [
+        "컴퓨터활용"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q106",
+      "category": "simple",
+      "difficulty": null,
+      "question": "혹시 웹사이트제작기초 몇 학점이야?",
+      "source": "student_style",
+      "original_id": 219,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_370013-35"
+      ],
+      "required_entities": [
+        "웹사이트제작기초"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q107",
+      "category": "simple",
+      "difficulty": null,
+      "question": "브랜드디자인기초 몇 학점이야?",
+      "source": "student_style",
+      "original_id": 677,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_320045-35"
+      ],
+      "required_entities": [
+        "브랜드디자인기초"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q108",
+      "category": "simple",
+      "difficulty": null,
+      "question": "이승재 교수님 연구실 어디야",
+      "source": "student_style",
+      "original_id": 36,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530045-89",
+        "academic_001_course_530039-89",
+        "academic_001_course_530041-89",
+        "academic_001_course_530045-91",
+        "academic_001_md_professor_이승재"
+      ],
+      "required_entities": [
+        "이승재"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q109",
+      "category": "simple",
+      "difficulty": null,
+      "question": "텍스트마이닝 몇 학점이야",
+      "source": "natural_v2",
+      "original_id": 921,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560039-75"
+      ],
+      "required_entities": [
+        "텍스트마이닝"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q110",
+      "category": "simple",
+      "difficulty": null,
+      "question": "정동주 전화번호도 책자에 나와?",
+      "source": "natural_v2",
+      "original_id": 774,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950007-01",
+        "academic_001_course_430115-58",
+        "academic_001_course_430043-58",
+        "academic_001_course_430137-58",
+        "academic_001_course_430145-58"
+      ],
+      "required_entities": [
+        "정동주"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q111",
+      "category": "simple",
+      "difficulty": null,
+      "question": "저기 김정현 교수님 연구실 어디야?",
+      "source": "student_style",
+      "original_id": 526,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_580011-86",
+        "academic_001_course_580011-87",
+        "academic_001_course_580021-86",
+        "academic_001_md_professor_김정현"
+      ],
+      "required_entities": [
+        "김정현"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q112",
+      "category": "simple",
+      "difficulty": null,
+      "question": "MOS따라잡기 몇 학점이야",
+      "source": "natural_v2",
+      "original_id": 69,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920501-01",
+        "academic_001_course_920501-02"
+      ],
+      "required_entities": [
+        "MOS따라잡기"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q113",
+      "category": "simple",
+      "difficulty": null,
+      "question": "혹시 이승재 교수님 번호 뭐임?",
+      "source": "student_style",
+      "original_id": 632,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530045-89",
+        "academic_001_course_530039-89",
+        "academic_001_course_530041-89",
+        "academic_001_course_530045-91",
+        "academic_001_md_professor_이승재"
+      ],
+      "required_entities": [
+        "이승재"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q114",
+      "category": "simple",
+      "difficulty": null,
+      "question": "이경재 전화번호도 책자에 나와?",
+      "source": "natural_v2",
+      "original_id": 625,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-01",
+        "academic_001_course_910043-05",
+        "academic_001_course_910043-07",
+        "academic_001_course_550157-72",
+        "academic_001_course_550157-74"
+      ],
+      "required_entities": [
+        "이경재"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q115",
+      "category": "simple",
+      "difficulty": null,
+      "question": "중국경제입문 몇 학점이야 ㅠㅠ",
+      "source": "student_style",
+      "original_id": 882,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_470041-64"
+      ],
+      "required_entities": [
+        "중국경제입문"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q116",
+      "category": "simple",
+      "difficulty": null,
+      "question": "다변량데이터분석 몇 학점이야",
+      "source": "natural_v2",
+      "original_id": 256,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560041-75"
+      ],
+      "required_entities": [
+        "다변량데이터분석"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q117",
+      "category": "simple",
+      "difficulty": null,
+      "question": "미분적분학 몇 학점이야",
+      "source": "natural_v2",
+      "original_id": 339,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560001-71",
+        "academic_001_course_560001-72",
+        "academic_001_course_560001-73",
+        "academic_001_course_560001-74",
+        "academic_001_course_560001-75"
+      ],
+      "required_entities": [
+        "미분적분학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q118",
+      "category": "simple",
+      "difficulty": null,
+      "question": "황성호 교수님 연구실 어디야?",
+      "source": "student_style",
+      "original_id": 457,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510085-81",
+        "academic_001_course_510159-81",
+        "academic_001_md_professor_황성호"
+      ],
+      "required_entities": [
+        "황성호"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q119",
+      "category": "simple",
+      "difficulty": null,
+      "question": "이승재 교수님 번호 뭐임?",
+      "source": "student_style",
+      "original_id": 320,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_530045-89",
+        "academic_001_course_530039-89",
+        "academic_001_course_530041-89",
+        "academic_001_course_530045-91",
+        "academic_001_md_professor_이승재"
+      ],
+      "required_entities": [
+        "이승재"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q120",
+      "category": "simple",
+      "difficulty": null,
+      "question": "손나래 교수님 연구실 어디야 좀 알려줘",
+      "source": "student_style",
+      "original_id": 244,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_200163-02",
+        "academic_001_course_130091-13",
+        "academic_001_course_130077-14",
+        "academic_001_course_170063-14",
+        "academic_001_md_professor_손나래"
+      ],
+      "required_entities": [
+        "손나래"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q121",
+      "category": "simple",
+      "difficulty": null,
+      "question": "이경재 교수님 연구실 어디야?",
+      "source": "student_style",
+      "original_id": 289,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-01",
+        "academic_001_course_910043-05",
+        "academic_001_course_910043-07",
+        "academic_001_course_550157-72",
+        "academic_001_course_550157-74"
+      ],
+      "required_entities": [
+        "이경재"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q122",
+      "category": "simple",
+      "difficulty": null,
+      "question": "통계적데이터마이닝 몇 학점이야",
+      "source": "natural_v2",
+      "original_id": 931,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560063-75"
+      ],
+      "required_entities": [
+        "통계적데이터마이닝"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q123",
+      "category": "simple",
+      "difficulty": null,
+      "question": "이거 최유진 교수님 번호 뭐임?",
+      "source": "student_style",
+      "original_id": 540,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920529-01",
+        "academic_001_course_960009-02",
+        "academic_001_course_530063-88",
+        "academic_001_course_530063-90",
+        "academic_001_md_professor_최유진"
+      ],
+      "required_entities": [
+        "최유진"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q124",
+      "category": "simple",
+      "difficulty": null,
+      "question": "장우남 교수님 연구실 어디야?",
+      "source": "student_style",
+      "original_id": 941,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_570053-84",
+        "academic_001_course_570041-84",
+        "academic_001_course_570083-84",
+        "academic_001_md_professor_장우남"
+      ],
+      "required_entities": [
+        "장우남"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q125",
+      "category": "simple",
+      "difficulty": null,
+      "question": "김용철 전화번호도 책자에 나와?",
+      "source": "natural_v2",
+      "original_id": 212,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550165-71",
+        "academic_001_course_550165-72",
+        "academic_001_course_550165-73",
+        "academic_001_course_550165-74",
+        "academic_001_course_550165-75"
+      ],
+      "required_entities": [
+        "김용철"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q126",
+      "category": "simple",
+      "difficulty": null,
+      "question": "천양하 교수님 연구실 어디야 빨리",
+      "source": "student_style",
+      "original_id": 926,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-04",
+        "academic_001_course_920501-01",
+        "academic_001_course_920501-02",
+        "academic_001_course_550033-73",
+        "academic_001_course_550175-73"
+      ],
+      "required_entities": [
+        "천양하"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q127",
+      "category": "simple",
+      "difficulty": null,
+      "question": "헐 정지연 교수님 연구실 어디야?",
+      "source": "student_style",
+      "original_id": 568,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510129-81",
+        "academic_001_course_510121-81",
+        "academic_001_course_510153-81",
+        "academic_001_md_professor_정지연"
+      ],
+      "required_entities": [
+        "정지연"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q128",
+      "category": "simple",
+      "difficulty": null,
+      "question": "노인과건강 몇 학점이야?",
+      "source": "student_style",
+      "original_id": 1,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_210075-21"
+      ],
+      "required_entities": [
+        "노인과건강"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q129",
+      "category": "simple",
+      "difficulty": null,
+      "question": "저기 스포츠경영학 몇 학점이야?",
+      "source": "student_style",
+      "original_id": 22,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_200225-01",
+        "academic_001_course_200225-20"
+      ],
+      "required_entities": [
+        "스포츠경영학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q130",
+      "category": "simple",
+      "difficulty": null,
+      "question": "김판기 전화번호도 책자에 나와?",
+      "source": "natural_v2",
+      "original_id": 235,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510067-81",
+        "academic_001_course_510123-81",
+        "academic_001_md_professor_김판기"
+      ],
+      "required_entities": [
+        "김판기"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q131",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "엘리베이터 고장났어",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q132",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "화장실 어디야",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q133",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "카페 위치 알려줘",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q134",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "편의점 몇 시까지 열어",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q135",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "식당 오늘 메뉴 뭐야",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q136",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "매점 위치가 어디지",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q137",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "주차장 이용료 얼마야",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q138",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "동아리방 어디에 있어",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q139",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "기숙사 신청 어디서 해",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q140",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "체육관 이용시간 알려줘",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q141",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "학교 근처 맛집 추천",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q142",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "셔틀버스 시간표",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q143",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "도서관 몇 시까지 여는지",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q144",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "학생회관 위치",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q145",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "강당 사용법",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q146",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "프린터 어디 있어",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q147",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "커피 마실 곳 없나",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q148",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "벤치 있는 데 어디야",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q149",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "흡연구역 위치",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q150",
+      "category": "ambiguous",
+      "difficulty": null,
+      "question": "자전거 거치대 어디",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "학사 무관 · refusal 대상",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q151",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "운영체제 수업 난이도 어느 정도야",
+      "source": "natural_v2",
+      "original_id": 562,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550033-73"
+      ],
+      "required_entities": [
+        "운영체제"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q152",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "천양하 수업 뭐임?",
+      "source": "natural_v2",
+      "original_id": 832,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-04",
+        "academic_001_course_920501-01",
+        "academic_001_course_920501-02",
+        "academic_001_course_550033-73",
+        "academic_001_course_550175-73"
+      ],
+      "required_entities": [
+        "천양하"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q153",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "창의적종합설계(캡스톤디자인) 강의실 어디임",
+      "source": "natural_v2",
+      "original_id": 816,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550175-73"
+      ],
+      "required_entities": [
+        "창의적종합설계(캡스톤디자인)"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q154",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "확률과통계 강의실 어디임",
+      "source": "natural_v2",
+      "original_id": 972,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560003-71",
+        "academic_001_course_560003-72",
+        "academic_001_course_560003-73",
+        "academic_001_course_560003-74",
+        "academic_001_course_560003-75"
+      ],
+      "required_entities": [
+        "확률과통계"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q155",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "정동주 수업 빡셈?",
+      "source": "natural_v2",
+      "original_id": 772,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_950007-01",
+        "academic_001_course_430115-58",
+        "academic_001_course_430043-58",
+        "academic_001_course_430137-58",
+        "academic_001_course_430145-58"
+      ],
+      "required_entities": [
+        "정동주"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q156",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "김은화 교수님 수업 중에 자바랑 미적 뭐가 있음?",
+      "source": "natural_v2",
+      "original_id": 217,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-02",
+        "academic_001_course_920503-01",
+        "academic_001_course_560001-71",
+        "academic_001_course_560001-72",
+        "academic_001_course_560053-71"
+      ],
+      "required_entities": [
+        "김은화"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q157",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "헐 정지연 이번 학기 강의 뭐야?",
+      "source": "student_style",
+      "original_id": 116,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510129-81",
+        "academic_001_course_510121-81",
+        "academic_001_course_510153-81",
+        "academic_001_md_professor_정지연"
+      ],
+      "required_entities": [
+        "정지연"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q158",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "컴퓨터비전 강의실 어디임",
+      "source": "natural_v2",
+      "original_id": 869,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550143-73"
+      ],
+      "required_entities": [
+        "컴퓨터비전"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q159",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "딥러닝 강의실 어디임",
+      "source": "natural_v2",
+      "original_id": 273,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550179-73"
+      ],
+      "required_entities": [
+        "딥러닝"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q160",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "이경재가 관광자원론 맡음?",
+      "source": "student_style",
+      "original_id": 14,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-01",
+        "academic_001_course_910043-05",
+        "academic_001_course_910043-07",
+        "academic_001_course_550157-72",
+        "academic_001_course_550157-74"
+      ],
+      "required_entities": [
+        "이경재"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q161",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "지경희 수업 어디서 해 이거 맞냐",
+      "source": "student_style",
+      "original_id": 58,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510147-81",
+        "academic_001_course_510151-81",
+        "academic_001_md_professor_지경희"
+      ],
+      "required_entities": [
+        "지경희"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q162",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "김용철 수업 빡셈?",
+      "source": "natural_v2",
+      "original_id": 208,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550165-71",
+        "academic_001_course_550165-72",
+        "academic_001_course_550165-73",
+        "academic_001_course_550165-74",
+        "academic_001_course_550165-75"
+      ],
+      "required_entities": [
+        "김용철"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q163",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "천양하 수업 뭐 맡음 좀 알려줘",
+      "source": "student_style",
+      "original_id": 100,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_910043-04",
+        "academic_001_course_920501-01",
+        "academic_001_course_920501-02",
+        "academic_001_course_550033-73",
+        "academic_001_course_550175-73"
+      ],
+      "required_entities": [
+        "천양하"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q164",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "인공지능프로그래밍 수업 난이도 어느 정도야",
+      "source": "natural_v2",
+      "original_id": 704,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550165-71",
+        "academic_001_course_550165-72",
+        "academic_001_course_550031-71",
+        "academic_001_course_550031-72",
+        "academic_001_course_550165-73"
+      ],
+      "required_entities": [
+        "인공지능프로그래밍",
+        "인공지능"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q165",
+      "category": "relational",
+      "difficulty": "single-hop",
+      "question": "최유진가 스토리텔링과콘텐츠 맡음?",
+      "source": "student_style",
+      "original_id": 459,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920529-01",
+        "academic_001_course_960009-02",
+        "academic_001_course_530063-88",
+        "academic_001_course_530063-90",
+        "academic_001_md_professor_최유진"
+      ],
+      "required_entities": [
+        "최유진"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q166",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "황상원 교수님 딥러닝 목요일 맞지?",
+      "source": "natural_v2",
+      "original_id": 980,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550179-73"
+      ],
+      "required_entities": [
+        "황상원",
+        "딥러닝",
+        "목"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q167",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "딥러닝이랑 패턴인식 둘 다 들으면 월목 어케 됨",
+      "source": "natural_v2",
+      "original_id": 287,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550163-73",
+        "academic_001_course_550179-73"
+      ],
+      "required_entities": [
+        "패턴인식",
+        "딥러닝",
+        "월",
+        "목"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q168",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "그럼 천양하 수업 월요일에도 있음?",
+      "source": "student_style",
+      "original_id": 520,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560049-75",
+        "academic_001_md_professor_천양하"
+      ],
+      "required_entities": [
+        "천양하",
+        "월"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q169",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "김판수 수업 월요일에도 있음",
+      "source": "student_style",
+      "original_id": 879,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_100011-01",
+        "academic_001_course_110019-05",
+        "academic_001_md_professor_김판수"
+      ],
+      "required_entities": [
+        "김판수",
+        "월"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q170",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "김은화 수업 월화수목금 중에 언제 있음?",
+      "source": "natural_v2",
+      "original_id": 222,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_920503-01",
+        "academic_001_course_560001-71",
+        "academic_001_course_560001-72",
+        "academic_001_course_560053-71",
+        "academic_001_course_560001-73"
+      ],
+      "required_entities": [
+        "김은화",
+        "월",
+        "화",
+        "수",
+        "목",
+        "금"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q171",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "진짜 이현주 수업 월요일에도 있음?",
+      "source": "student_style",
+      "original_id": 107,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510109-81",
+        "academic_001_md_professor_이현주"
+      ],
+      "required_entities": [
+        "이현주",
+        "월"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q172",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "이경재 수업 월화수목금 중에 언제 있음?",
+      "source": "natural_v2",
+      "original_id": 622,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550157-72",
+        "academic_001_course_550157-74",
+        "academic_001_course_550143-73",
+        "academic_001_course_550157-76",
+        "academic_001_md_professor_이경재"
+      ],
+      "required_entities": [
+        "이경재",
+        "월",
+        "화",
+        "수",
+        "목",
+        "금"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q173",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "빅데이터분석및응용 목요일 오후 맞음?",
+      "source": "natural_v2",
+      "original_id": 411,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560031-75"
+      ],
+      "required_entities": [
+        "빅데이터분석및응용",
+        "목"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q174",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "박진수 수업 월화수목금 중에 언제 있음?",
+      "source": "natural_v2",
+      "original_id": 374,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550171-71",
+        "academic_001_course_550171-72",
+        "academic_001_course_560011-71",
+        "academic_001_course_560011-72",
+        "academic_001_course_550171-73"
+      ],
+      "required_entities": [
+        "박진수",
+        "월",
+        "화",
+        "수",
+        "목",
+        "금"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q175",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "나 급한데 이현주 수업 월요일에도 있음?",
+      "source": "student_style",
+      "original_id": 306,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_510109-81",
+        "academic_001_md_professor_이현주"
+      ],
+      "required_entities": [
+        "이현주",
+        "월"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q176",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "박진수 교수님 R수업 월요일이야 화요일이야?",
+      "source": "natural_v2",
+      "original_id": 370,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550171-71",
+        "academic_001_course_550171-72",
+        "academic_001_course_550171-73",
+        "academic_001_course_550171-74",
+        "academic_001_course_550171-75"
+      ],
+      "required_entities": [
+        "박진수",
+        "월",
+        "화"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q177",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "이거 김정현 수업 월요일에도 있음?",
+      "source": "student_style",
+      "original_id": 817,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_580011-87",
+        "academic_001_md_professor_김정현"
+      ],
+      "required_entities": [
+        "김정현",
+        "월"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q178",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "아 김용철 수업 월요일에도 있음?",
+      "source": "student_style",
+      "original_id": 247,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550165-71",
+        "academic_001_course_550165-72",
+        "academic_001_course_550165-73",
+        "academic_001_course_550165-74",
+        "academic_001_course_550165-75"
+      ],
+      "required_entities": [
+        "김용철",
+        "월"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q179",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "운영체제 화요일 2시 수업 맞는지 확인해줘",
+      "source": "natural_v2",
+      "original_id": 569,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_550033-73"
+      ],
+      "required_entities": [
+        "운영체제",
+        "화"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q180",
+      "category": "relational",
+      "difficulty": "constraint",
+      "question": "강맹수 수업 월화수목금 중에 언제 있음?",
+      "source": "natural_v2",
+      "original_id": 108,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_560003-71",
+        "academic_001_course_560003-72",
+        "academic_001_course_560003-73",
+        "academic_001_course_560003-74",
+        "academic_001_course_560003-75"
+      ],
+      "required_entities": [
+        "강맹수",
+        "월",
+        "화",
+        "수",
+        "목",
+        "금"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "medium",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q181",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "윤수연 과목 중에 자료구조 있음?",
+      "source": "natural_v2",
+      "original_id": 607,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_340401-40"
+      ],
+      "required_entities": [
+        "윤수연",
+        "자료구조"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q182",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "이현주가 스포츠경영학 맡음?",
+      "source": "student_style",
+      "original_id": 764,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_이현주"
+      ],
+      "required_entities": [
+        "이현주",
+        "스포츠경영학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q183",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "그럼 황성호 물리치료학개론 하심?",
+      "source": "student_style",
+      "original_id": 5,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_황성호"
+      ],
+      "required_entities": [
+        "황성호",
+        "물리치료학개론"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q184",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "조임형 문화콘텐츠의이해 하심",
+      "source": "student_style",
+      "original_id": 698,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_조임형"
+      ],
+      "required_entities": [
+        "조임형",
+        "문화콘텐츠의이해"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q185",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "나 급한데 이현주가 노인과건강 맡음?",
+      "source": "student_style",
+      "original_id": 922,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_이현주"
+      ],
+      "required_entities": [
+        "이현주",
+        "노인과건강"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q186",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "이승재가 중국학입문 맡음?",
+      "source": "student_style",
+      "original_id": 610,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_이승재"
+      ],
+      "required_entities": [
+        "이승재",
+        "중국학입문"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q187",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "조임형 영화촬영기초 하심 좀 알려줘",
+      "source": "student_style",
+      "original_id": 327,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_조임형"
+      ],
+      "required_entities": [
+        "조임형",
+        "영화촬영기초"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q188",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "미분적분학 조문기 분반이랑 다른 분반 시간 차이 뭐임",
+      "source": "natural_v2",
+      "original_id": 351,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [
+        "조문기",
+        "미분적분학"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q189",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "패턴인식 안정란 분반이랑 다른 분반 시간 차이 뭐임",
+      "source": "natural_v2",
+      "original_id": 946,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_info_0"
+      ],
+      "required_entities": [
+        "안정란",
+        "패턴인식"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q190",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "김정현가 노인과건강 맡음?",
+      "source": "student_style",
+      "original_id": 114,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_김정현"
+      ],
+      "required_entities": [
+        "김정현",
+        "노인과건강"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q191",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "손나래 브랜드디자인기초 하심?",
+      "source": "student_style",
+      "original_id": 732,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_손나래"
+      ],
+      "required_entities": [
+        "손나래",
+        "브랜드디자인기초"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q192",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "이경재 과목 중에 생활물리치료 있음?",
+      "source": "natural_v2",
+      "original_id": 618,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_이경재"
+      ],
+      "required_entities": [
+        "이경재",
+        "생활물리치료"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q193",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "조임형가 English1 맡음?",
+      "source": "student_style",
+      "original_id": 246,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_조임형"
+      ],
+      "required_entities": [
+        "조임형",
+        "English1"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q194",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "윤수연 과목 중에 확률과통계 있음?",
+      "source": "natural_v2",
+      "original_id": 608,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_course_400027-55"
+      ],
+      "required_entities": [
+        "윤수연",
+        "확률과통계"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "low",
+      "auto_method": "chroma/top-1"
+    },
+    {
+      "question_id": "Q195",
+      "category": "relational",
+      "difficulty": "multi-hop",
+      "question": "김판기가 물리치료학개론 맡음?",
+      "source": "student_style",
+      "original_id": 670,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [
+        "academic_001_md_professor_김판기"
+      ],
+      "required_entities": [
+        "김판기",
+        "물리치료학개론"
+      ],
+      "answerable": true,
+      "notes": null,
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/entity"
+    },
+    {
+      "question_id": "Q196",
+      "category": "relational",
+      "difficulty": "non-existent",
+      "question": "서지영 교수님 디자인창업세미나 언제야?",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "실제로는 김인섭 교수 담당 (교수·과목 조합 불일치)",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q197",
+      "category": "relational",
+      "difficulty": "non-existent",
+      "question": "이한경 교수님 관광법규및정책론 언제야?",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "실제로는 김민정 교수 담당 (교수·과목 조합 불일치)",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q198",
+      "category": "relational",
+      "difficulty": "non-existent",
+      "question": "김주연 교수님 스포츠사회학 언제야?",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "실제로는 성낙훈 교수 담당 (교수·과목 조합 불일치)",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q199",
+      "category": "relational",
+      "difficulty": "non-existent",
+      "question": "이강진 교수님 유적유물의기초이해 언제야?",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "실제로는 김길식 교수 담당 (교수·과목 조합 불일치)",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    },
+    {
+      "question_id": "Q200",
+      "category": "relational",
+      "difficulty": "non-existent",
+      "question": "배연준 교수님 무도연결기술(검도) 언제야?",
+      "source": "synthesized",
+      "original_id": null,
+      "gold_answer": null,
+      "gold_doc_ids": [],
+      "gold_chunk_ids": [],
+      "required_entities": [],
+      "answerable": false,
+      "notes": "실제로는 박학진 교수 담당 (교수·과목 조합 불일치)",
+      "reviewed": false,
+      "auto_confidence": "high",
+      "auto_method": "rule/non-answerable"
+    }
+  ]
+}
